@@ -1,8 +1,8 @@
 #ifndef IO_LIST
 #define IO_LIST
 
-#include <io/io_assert.h>
-#include <io/io_config.h>
+#include <io/assert.h>
+#include <io/config.h>
 
 /** Generic doubly linked list implementation.
  * that works with any struct that has a next and prev pointer.

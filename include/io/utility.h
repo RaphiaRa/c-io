@@ -1,7 +1,7 @@
 #ifndef IO_UTILITY_H
 #define IO_UTILITY_H
 
-#include <io/io_config.h>
+#include <io/config.h>
 
 #include <stdlib.h>
 

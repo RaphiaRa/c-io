@@ -1,9 +1,9 @@
 #ifndef IO_OBJ_POOL_H
 #define IO_OBJ_POOL_H
 
-#include <io/io_allocator.h>
-#include <io/io_assert.h>
-#include <io/io_list.h>
+#include <io/allocator.h>
+#include <io/assert.h>
+#include <io/list.h>
 
 /** Generic object pool allocator.
  * The pool allocator is a allocator that allocates objects from a pool of fixed-size blocks.

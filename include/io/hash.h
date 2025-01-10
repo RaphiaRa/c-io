@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <io/io_config.h>
+#include <io/config.h>
 
 /** io_hash_bytes
  * @brief Fowler-Noll-Vo hash function (FNV-1a).

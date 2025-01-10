@@ -4,12 +4,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include <io/io_allocator.h>
-#include <io/io_config.h>
-#include <io/io_context.h>
-#include <io/io_err.h>
-#include <io/io_socket.h>
-#include <io/io_unix_acceptor.h>
-#include <io/io_unix_socket.h>
+#include <io/allocator.h>
+#include <io/config.h>
+#include <io/context.h>
+#include <io/err.h>
+#include <io/socket.h>
+#include <io/unix_acceptor.h>
+#include <io/unix_socket.h>
 
 #endif
