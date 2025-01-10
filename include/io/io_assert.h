@@ -8,7 +8,7 @@
 #define IO_ASSERT(cond, msg)                                                      \
     do {                                                                          \
         if (!(cond)) {                                                            \
-            fprintf(stderr, "msg: %s at %s:%d\n", msg, #cond, __FILE__, __LINE__); \
+            fprintf(stderr, "%s: %s at %s:%d\n", msg, #cond, __FILE__, __LINE__); \
             abort();                                                              \
         }                                                                         \
     } while (0)

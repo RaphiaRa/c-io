@@ -17,10 +17,13 @@ typedef struct io_UnixAcceptor {
     io_Acceptor base;
 } io_UnixAcceptor;
 
-IO_INLINE(void)
-io_UnixAcceptor_init(io_UnixAcceptor* acceptor, io_Context* ctx)
+IO_INLINE(io_UnixAcceptor)
+io_UnixAcceptor_make(io_Context* ctx)
 {
-    io_Acceptor_init(&acceptor->base, ctx);
+    io_UnixAcceptor acceptor = {
+        .base = io_Acceptor_make(ctx),
+    };
+    return acceptor;
 }
 
 IO_INLINE(io_Err)
@@ -47,6 +50,12 @@ io_UnixAcceptor_bind(io_UnixAcceptor* acceptor, const char* path)
 cleanup_socket:
     close(fd);
     return err;
+}
+
+IO_INLINE(void)
+io_UnixAcceptor_destroy(io_UnixAcceptor* acceptor)
+{
+    io_Acceptor_destroy(&acceptor->base);
 }
 
 DEFINE_DESCRIPTOR_WRAPPERS(io_UnixAcceptor, io_Acceptor)

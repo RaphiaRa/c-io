@@ -13,10 +13,13 @@ typedef struct io_Acceptor {
     io_Descriptor base;
 } io_Acceptor;
 
-IO_INLINE(void)
-io_Acceptor_init(io_Acceptor* acceptor, io_Context* context)
+IO_INLINE(io_Acceptor)
+io_Acceptor_make(io_Context* context)
 {
-    io_Descriptor_init(&acceptor->base, context);
+    io_Acceptor acceptor = {
+        .base = io_Descriptor_make(context),
+    };
+    return acceptor;
 }
 
 IO_INLINE(void)
@@ -29,6 +32,12 @@ IO_INLINE(io_Err)
 io_Acceptor_accept(io_Acceptor* acceptor, io_Socket* socket)
 {
     return io_accept_perform(&acceptor->base, &socket->base);
+}
+
+IO_INLINE(void)
+io_Acceptor_destroy(io_Acceptor* acceptor)
+{
+    io_Descriptor_close(&acceptor->base);
 }
 
 DEFINE_DESCRIPTOR_WRAPPERS(io_Acceptor, io_Descriptor)

@@ -142,10 +142,12 @@
                 entry->value = value;                                                                                               \
                 map->size++;                                                                                                        \
                 NAME##_update_begin_end(map, i);                                                                                    \
+                return;                                                                                                             \
             }                                                                                                                       \
             if (K_EQ(entry->key, key)) {                                                                                            \
                 entry->key = key;                                                                                                   \
                 entry->value = value;                                                                                               \
+                return;                                                                                                             \
             }                                                                                                                       \
         }                                                                                                                           \
         for (size_t i = 0; i < hash; i++) {                                                                                         \
@@ -155,10 +157,12 @@
                 entry->value = value;                                                                                               \
                 map->size++;                                                                                                        \
                 NAME##_update_begin_end(map, i);                                                                                    \
+                return;                                                                                                             \
             }                                                                                                                       \
             if (K_EQ(entry->key, key)) {                                                                                            \
                 entry->key = key;                                                                                                   \
                 entry->value = value;                                                                                               \
+                return;                                                                                                             \
             }                                                                                                                       \
         }                                                                                                                           \
         IO_REQUIRE(0, "No space in map left");                                                                                      \

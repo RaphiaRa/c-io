@@ -7,7 +7,8 @@
 #include <string.h>
 
 typedef enum io_OtherErrc {
-    IO_OTHER_ERRC_EOF = 1
+    IO_OTHER_ERRC_EOF = 1,
+    IO_OTHER_ERRC_UNKNOWN = 2,
 } io_OtherErrc;
 
 IO_INLINE(io_ErrCategory*)
@@ -44,5 +45,5 @@ io_OtherErrCategory(void)
 }
 
 #define IO_ERR_EOF ((io_Err){IO_OTHER_ERRC_EOF, io_OtherErrCategory()})
-
+#define IO_ERR_UNKNOWN ((io_Err){IO_OTHER_ERRC_UNKNOWN, io_OtherErrCategory()})
 #endif

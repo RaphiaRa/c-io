@@ -16,7 +16,7 @@ typedef struct io_Loop {
     io_Task reactor_task;
 } io_Loop;
 
-IO_INLINE(io_Err)
+IO_INLINE(void)
 io_Loop_init(io_Loop* loop, io_Reactor* reactor)
 {
     loop->num_tasks = 0;
@@ -33,6 +33,12 @@ io_Loop_push_task(io_Loop* loop, io_Task* task)
 
 IO_INLINE(void)
 io_Loop_decrease_task_count(io_Loop* loop)
+{
+    --loop->num_tasks;
+}
+
+IO_INLINE(void)
+io_Loop_increase_task_count(io_Loop* loop)
 {
     ++loop->num_tasks;
 }

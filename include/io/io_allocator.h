@@ -2,6 +2,7 @@
 #define IO_ALLOCATOR_H
 
 #include <stddef.h>
+#include <stdlib.h>
 
 #include <io/io_config.h>
 
@@ -34,38 +35,84 @@ io_Allocator_free(io_Allocator* allocator, void* ptr)
 }
 
 IO_INLINE(void*)
-io_DefaultAllocator_alloc(void* self, size_t size)
+io_SystemAllocator_alloc(void* self, size_t size)
 {
     (void)self;
     return malloc(size);
 }
 
 IO_INLINE(void*)
-io_DefaultAllocator_realloc(void* self, void* addr, size_t size)
+io_SystemAllocator_realloc(void* self, void* addr, size_t size)
 {
     (void)self;
     return realloc(addr, size);
 }
 
 IO_INLINE(void)
-io_DefaultAllocator_free(void* self, void* addr)
+io_SystemAllocator_free(void* self, void* addr)
 {
     (void)self;
     free(addr);
 }
 
 IO_INLINE(io_Allocator*)
-io_DefaultAllocator(void)
+io_SystemAllocator(void)
 {
     static io_AllocatorMethods methods = {
-        .alloc = io_DefaultAllocator_alloc,
-        .realloc = io_DefaultAllocator_realloc,
-        .free = io_DefaultAllocator_free,
+        .alloc = io_SystemAllocator_alloc,
+        .realloc = io_SystemAllocator_realloc,
+        .free = io_SystemAllocator_free,
     };
     static io_Allocator allocator = {
         .methods = &methods,
     };
     return &allocator;
+}
+
+IO_INLINE(io_Allocator**)
+io_UserAllocator_ptr(void)
+{
+    static io_Allocator* allocator = NULL;
+    return &allocator;
+}
+
+IO_INLINE(io_Allocator*)
+io_UserAllocator(void)
+{
+    return *io_UserAllocator_ptr();
+}
+
+IO_INLINE(void)
+io_set_allocator(io_Allocator* allocator)
+{
+    *io_UserAllocator_ptr() = allocator;
+}
+
+IO_INLINE(io_Allocator*)
+io_DefaultAllocator(void)
+{
+    if (io_UserAllocator() != NULL) {
+        return io_UserAllocator();
+    }
+    return io_SystemAllocator();
+}
+
+IO_INLINE(void*)
+io_alloc(size_t size)
+{
+    return io_Allocator_alloc(io_DefaultAllocator(), size);
+}
+
+IO_INLINE(void*)
+io_realloc(void* addr, size_t size)
+{
+    return io_Allocator_realloc(io_DefaultAllocator(), addr, size);
+}
+
+IO_INLINE(void)
+io_free(void* addr)
+{
+    io_Allocator_free(io_DefaultAllocator(), addr);
 }
 
 #endif

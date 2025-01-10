@@ -29,6 +29,7 @@ typedef struct io_Err {
 
 #define IO_ERR_OK ((io_Err){0, NULL})
 #define IO_ERR_HAS(lh) ((lh).code != 0)
+#define IO_ERR_EQ(lh, rh) (((lh).category == (rh).category) && ((rh).code == (lh).code))
 
 IO_INLINE(io_Err)
 io_Err_make(int code, const io_ErrCategory* category)
@@ -45,7 +46,7 @@ io_Err_msg(io_Err err)
 IO_INLINE(int)
 io_Err_printf(FILE* file, io_Err err)
 {
-    return fprintf(file, "%s: %s\n", io_ErrCategory_name(err.category), io_Err_msg(err));
+    return fprintf(file, "Error: %s - %s\n", io_ErrCategory_name(err.category), io_Err_msg(err));
 }
 
 #endif

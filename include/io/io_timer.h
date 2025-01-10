@@ -12,13 +12,32 @@
 #include <time.h>
 
 typedef struct io_Duration {
-    int seconds;
+    int ms;
 } io_Duration;
 
-io_Duration io_seconds(int seconds);
-io_Duration io_minutes(int minutes);
-io_Duration io_hours(int hours);
-io_Duration io_days(int days);
+IO_INLINE(io_Duration)
+io_Seconds(int seconds)
+{
+    return (io_Duration){.ms = 1000 * seconds};
+}
+
+IO_INLINE(io_Duration)
+io_Minutes(int minutes)
+{
+    return io_Seconds(60 * minutes);
+}
+
+IO_INLINE(io_Duration)
+io_Hours(int hours)
+{
+    return io_Minutes(60 * hours);
+}
+
+IO_INLINE(int)
+io_Duration_to_seconds(io_Duration duration)
+{
+    return duration.ms / 1000;
+}
 
 typedef struct io_Timer {
     time_t expire;
@@ -71,7 +90,7 @@ io_Timer_set(io_Timer* timer, io_Duration duration)
     IO_ASSERT(!IO_ERR_HAS(err), "io_Timer_monotonic_now failed");
     if (IO_ERR_HAS(err))
         return err;
-    timer->expire = now + duration.seconds;
+    timer->expire = now + io_Duration_to_seconds(duration);
     return IO_ERR_OK;
 }
 

@@ -10,11 +10,13 @@ typedef struct io_Descriptor {
     io_Handle* handle;
 } io_Descriptor;
 
-IO_INLINE(void)
-io_Descriptor_init(io_Descriptor* descriptor, io_Context* context)
+IO_INLINE(io_Descriptor)
+io_Descriptor_make(io_Context* context)
 {
-    descriptor->context = context;
-    descriptor->handle = NULL;
+    io_Descriptor descriptor;
+    descriptor.context = context;
+    descriptor.handle = NULL;
+    return descriptor;
 }
 
 IO_INLINE(void)
@@ -55,23 +57,29 @@ io_Descriptor_close(io_Descriptor* descriptor)
     io_Descriptor_clear_fd(descriptor);
 }
 
-#define DEFINE_DESCRIPTOR_WRAPPERS(P, B)      \
-    IO_INLINE(void)                           \
-    P##_close(P* descriptor)                  \
-    {                                         \
-        B##_close(&descriptor->base);         \
-    }                                         \
-                                              \
-    IO_INLINE(void)                           \
-    P##_set_fd(P* descriptor, int fd)         \
-    {                                         \
-        B##_set_fd(&descriptor->base, fd);    \
-    }                                         \
-                                              \
-    IO_INLINE(int)                            \
-    P##_get_fd(P* descriptor)                 \
-    {                                         \
-        return B##_get_fd(&descriptor->base); \
+#define DEFINE_DESCRIPTOR_WRAPPERS(P, B)           \
+    IO_INLINE(void)                                \
+    P##_close(P* descriptor)                       \
+    {                                              \
+        B##_close(&descriptor->base);              \
+    }                                              \
+                                                   \
+    IO_INLINE(void)                                \
+    P##_set_fd(P* descriptor, int fd)              \
+    {                                              \
+        B##_set_fd(&descriptor->base, fd);         \
+    }                                              \
+                                                   \
+    IO_INLINE(int)                                 \
+    P##_get_fd(const P* descriptor)                \
+    {                                              \
+        return B##_get_fd(&descriptor->base);      \
+    }                                              \
+                                                   \
+    IO_INLINE(io_Context*)                         \
+    P##_get_context(P* descriptor)                 \
+    {                                              \
+        return B##_get_context(&descriptor->base); \
     }
 
 #endif

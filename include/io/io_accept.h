@@ -13,16 +13,25 @@
 
 #include <sys/socket.h>
 
+typedef void (*io_AcceptHandler_fn)(void* self, io_Err err);
+
 typedef struct io_AcceptHandler {
-    void (*fn)(void* self, io_Err err);
-    void (*destroy)(void* self);
+    io_Task base;
+    io_AcceptHandler_fn fn;
+    io_Err err;
 } io_AcceptHandler;
 
 IO_INLINE(void)
-io_AcceptHandler_complete(io_AcceptHandler* handler, io_Err err)
+io_AcceptHandler_perform(void* self)
 {
-    handler->fn(handler, err);
-    handler->destroy(handler);
+    io_AcceptHandler* handler = self;
+    handler->fn(self, handler->err);
+}
+
+IO_INLINE(void)
+io_AcceptHandler_set_args(io_AcceptHandler* handler, io_Err err)
+{
+    handler->err = err;
 }
 
 typedef struct io_AcceptOp {
@@ -45,16 +54,33 @@ io_accept_perform(const io_Descriptor* acceptor, io_Descriptor* socket)
 }
 
 IO_INLINE(void)
+io_AcceptOp_complete(io_AcceptOp* op, io_Err err)
+{
+    io_AcceptHandler_set_args(op->handler, err);
+    io_Context_post(io_Descriptor_get_context(op->acceptor), &op->handler->base);
+}
+
+IO_INLINE(void)
 io_AcceptOp_fn(void* self)
 {
     io_AcceptOp* task = self;
     int fd = 0;
     io_Err err = io_accept_perform(task->acceptor, task->socket);
     if (!IO_ERR_HAS(err)) {
-        io_Op_set_completed(&task->base, true);
+        io_Op_set_flags(&task->base, IO_OP_COMPLETED);
+    } else if ((io_Op_flags(&task->base) & IO_OP_TRYIO)
+               && err.category == io_SystemErrCategory()
+               && (err.code == IO_EAGAIN || err.code == IO_EAGAIN)) {
+        return;
     }
+    io_AcceptOp_complete(task, err);
+}
 
-    io_AcceptHandler_complete(task->handler, err);
+IO_INLINE(void)
+io_AcceptOp_abort(void* self, io_Err err)
+{
+    io_AcceptOp* task = self;
+    io_AcceptOp_complete(task, err);
 }
 
 IO_INLINE(void)
@@ -69,7 +95,7 @@ io_AcceptOp_create(io_Descriptor* acceptor, io_Descriptor* socket, io_AcceptHand
 {
     io_AcceptOp* task = io_Allocator_alloc(io_Descriptor_get_context(acceptor)->allocator, sizeof(io_AcceptOp));
     IO_REQUIRE(task, "Out of memory");
-    io_Op_init(&task->base, IO_OP_READ, io_AcceptOp_fn, io_AcceptOp_destroy);
+    io_Op_init(&task->base, IO_OP_READ, io_AcceptOp_fn, io_AcceptOp_abort, io_AcceptOp_destroy);
     task->acceptor = acceptor;
     task->socket = socket;
     task->handler = handler;

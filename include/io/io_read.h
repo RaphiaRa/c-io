@@ -14,16 +14,27 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+typedef void (*io_ReadHandler_fn)(void* self, size_t size, io_Err err);
+
 typedef struct io_ReadHandler {
-    void (*fn)(void* self, size_t size, io_Err err);
-    void (*destroy)(void* self);
+    io_Task base;
+    io_ReadHandler_fn fn;
+    size_t size;
+    io_Err err;
 } io_ReadHandler;
 
 IO_INLINE(void)
-io_ReadHandler_complete(io_ReadHandler* handler, size_t size, io_Err err)
+io_ReadHandler_perform(void* self)
 {
-    handler->fn(handler, size, err);
-    handler->destroy(handler);
+    io_ReadHandler* handler = self;
+    handler->fn(self, handler->size, handler->err);
+}
+
+IO_INLINE(void)
+io_ReadHandler_set_args(io_ReadHandler* handler, size_t size, io_Err err)
+{
+    handler->size = size;
+    handler->err = err;
 }
 
 typedef struct io_ReadOp {
@@ -46,22 +57,40 @@ io_read_perform(io_Descriptor* socket, void* addr, size_t* size)
 }
 
 IO_INLINE(void)
+io_ReadOp_complete(io_ReadOp* op, size_t size, io_Err err)
+{
+    io_ReadHandler_set_args(op->handler, size, err);
+    io_Context_post(io_Descriptor_get_context(op->socket), &op->handler->base);
+}
+
+IO_INLINE(void)
 io_ReadOp_fn(void* self)
 {
     io_ReadOp* task = self;
     size_t bytes = task->len;
     io_Err err = io_read_perform(task->socket, task->addr, &bytes);
     if (!IO_ERR_HAS(err)) {
-        io_Op_set_completed(&task->base, true);
+        io_Op_set_flags(&task->base, IO_OP_COMPLETED);
+    } else if ((io_Op_flags(&task->base) & IO_OP_TRYIO)
+               && err.category == io_SystemErrCategory()
+               && (err.code == IO_EAGAIN || err.code == IO_EAGAIN)) {
+        return;
     }
-    io_ReadHandler_complete(task->handler, bytes, err);
+    io_ReadOp_complete(task, bytes, err);
 }
 
 IO_INLINE(void)
 io_ReadOp_destroy(void* self)
 {
     io_ReadOp* task = self;
-    io_Allocator_free(io_Descriptor_get_context(task->socket)->allocator, task);
+    io_Op_destroy(&task->base);
+}
+
+IO_INLINE(void)
+io_ReadOp_abort(void* self, io_Err err)
+{
+    io_ReadOp* task = self;
+    io_ReadOp_complete(task, 0, err);
 }
 
 IO_INLINE(io_ReadOp*)
@@ -69,7 +98,7 @@ io_ReadOp_create(io_Descriptor* socket, void* addr, size_t len, io_ReadHandler* 
 {
     io_ReadOp* task = io_Allocator_alloc(io_Descriptor_get_context(socket)->allocator, sizeof(io_ReadOp));
     IO_REQUIRE(task, "Out of memory");
-    io_Op_init(&task->base, IO_OP_READ, io_ReadOp_fn, io_ReadOp_destroy);
+    io_Op_init(&task->base, IO_OP_READ, io_ReadOp_fn, io_ReadOp_abort, io_ReadOp_destroy);
     task->socket = socket;
     task->addr = addr;
     task->len = len;
