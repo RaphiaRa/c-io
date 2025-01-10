@@ -3,10 +3,9 @@
 
 #include <io/io_config.h>
 
-#include <io/io_acceptor.h>
 #include <io/io_assert.h>
 #include <io/io_context.h>
-#include <io/io_socket.h>
+#include <io/io_descriptor.h>
 #include <io/io_system_err.h>
 #include <io/io_task.h>
 
@@ -14,22 +13,34 @@
 
 #include <sys/socket.h>
 
+typedef struct io_AcceptHandler {
+    void (*fn)(void* self, io_Err err);
+    void (*destroy)(void* self);
+} io_AcceptHandler;
+
+IO_INLINE(void)
+io_AcceptHandler_complete(io_AcceptHandler* handler, io_Err err)
+{
+    handler->fn(handler, err);
+    handler->destroy(handler);
+}
+
 typedef struct io_AcceptOp {
     io_Op base;
     io_AcceptHandler* handler;
-    io_Acceptor* acceptor;
-    io_Socket* socket;
+    io_Descriptor* acceptor;
+    io_Descriptor* socket;
 } io_AcceptOp;
 
 IO_INLINE(io_Err)
-io_accept_perform(const io_Acceptor* acceptor, io_Socket* socket)
+io_accept_perform(const io_Descriptor* acceptor, io_Descriptor* socket)
 {
-    int accept_fd = io_Acceptor_get_fd(acceptor);
+    int accept_fd = io_Descriptor_get_fd(acceptor);
     int ret = accept(accept_fd, NULL, NULL);
     if (ret == -1) {
         return io_SystemErr_make(errno);
     }
-    io_Socket_set_fd(socket, ret);
+    io_Descriptor_set_fd(socket, ret);
     return IO_ERR_OK;
 }
 
@@ -50,13 +61,13 @@ IO_INLINE(void)
 io_AcceptOp_destroy(void* self)
 {
     io_AcceptOp* task = self;
-    io_Allocator_free(io_Acceptor_get_context(task->acceptor)->allocator, task);
+    io_Allocator_free(io_Descriptor_get_context(task->acceptor)->allocator, task);
 }
 
 IO_INLINE(io_AcceptOp*)
-io_AcceptOp_create(io_Acceptor* acceptor, io_Socket* socket, io_AcceptHandler* handler)
+io_AcceptOp_create(io_Descriptor* acceptor, io_Descriptor* socket, io_AcceptHandler* handler)
 {
-    io_AcceptOp* task = io_Allocator_alloc(io_Acceptor_get_context(acceptor)->allocator, sizeof(io_AcceptOp));
+    io_AcceptOp* task = io_Allocator_alloc(io_Descriptor_get_context(acceptor)->allocator, sizeof(io_AcceptOp));
     IO_REQUIRE(task, "Out of memory");
     io_Op_init(&task->base, IO_OP_READ, io_AcceptOp_fn, io_AcceptOp_destroy);
     task->acceptor = acceptor;

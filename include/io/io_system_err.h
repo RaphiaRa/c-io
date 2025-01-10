@@ -31,4 +31,10 @@ io_SystemErrCategory(void)
     return &category;
 }
 
+/* Define the system error codes that we use */
+#if IO_OS_POSIX
+#define IO_ENOTSUP ENOTSUP
+#elif TH_OS_WINDOWS
+#define IO_ENOTSUP ERROR_NOT_SUPPORTED
+#endif
 #endif

@@ -8,23 +8,23 @@
 #include <unistd.h>
 
 #include <io/io_acceptor.h>
-#include <io/io_basic_acceptor.h>
 #include <io/io_context.h>
 #include <io/io_err.h>
 #include <io/io_system_err.h>
+#include <io/io_unix_socket.h>
 
 typedef struct io_UnixAcceptor {
-    io_BasicAcceptor base;
+    io_Acceptor base;
 } io_UnixAcceptor;
 
 IO_INLINE(void)
 io_UnixAcceptor_init(io_UnixAcceptor* acceptor, io_Context* ctx)
 {
-    io_BasicAcceptor_init(&acceptor->base, ctx);
+    io_Acceptor_init(&acceptor->base, ctx);
 }
 
 IO_INLINE(io_Err)
-io_UnixAcceptor_open(io_UnixAcceptor* acceptor, const char* path)
+io_UnixAcceptor_bind(io_UnixAcceptor* acceptor, const char* path)
 {
     int fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd == -1) {
@@ -42,11 +42,14 @@ io_UnixAcceptor_open(io_UnixAcceptor* acceptor, const char* path)
         err = io_SystemErr_make(errno);
         goto cleanup_socket;
     }
-    io_BasicAcceptor_set_fd(&acceptor->base, fd);
+    io_Acceptor_set_fd(&acceptor->base, fd);
     return err;
 cleanup_socket:
     close(fd);
     return err;
 }
+
+DEFINE_DESCRIPTOR_WRAPPERS(io_UnixAcceptor, io_Acceptor)
+DEFINE_ACCEPT_WRAPPERS(io_UnixAcceptor, io_UnixSocket)
 
 #endif

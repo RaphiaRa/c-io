@@ -3,5 +3,7 @@
 
 #define IO_MAYBE_UNUSED __attribute__((unused))
 #define IO_INLINE(type) static inline type
+#define IO_WITH_POLL 1
+#define IO_OS_POSIX 1
 
 #endif

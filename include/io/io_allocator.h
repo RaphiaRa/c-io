@@ -33,4 +33,39 @@ io_Allocator_free(io_Allocator* allocator, void* ptr)
     allocator->methods->free(allocator, ptr);
 }
 
+IO_INLINE(void*)
+io_DefaultAllocator_alloc(void* self, size_t size)
+{
+    (void)self;
+    return malloc(size);
+}
+
+IO_INLINE(void*)
+io_DefaultAllocator_realloc(void* self, void* addr, size_t size)
+{
+    (void)self;
+    return realloc(addr, size);
+}
+
+IO_INLINE(void)
+io_DefaultAllocator_free(void* self, void* addr)
+{
+    (void)self;
+    free(addr);
+}
+
+IO_INLINE(io_Allocator*)
+io_DefaultAllocator(void)
+{
+    static io_AllocatorMethods methods = {
+        .alloc = io_DefaultAllocator_alloc,
+        .realloc = io_DefaultAllocator_realloc,
+        .free = io_DefaultAllocator_free,
+    };
+    static io_Allocator allocator = {
+        .methods = &methods,
+    };
+    return &allocator;
+}
+
 #endif

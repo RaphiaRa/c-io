@@ -4,21 +4,12 @@
 #include <stddef.h>
 
 #include <io/io_allocator.h>
+#include <io/io_assert.h>
 #include <io/io_queue.h>
-#include <io/io_reactor.h>
-#include <io/io_task.h>
-
-IO_DEFINE_QUEUE(io_TaskQueue, io_Task)
-
-typedef struct io_Loop {
-    size_t num_tasks;
-    io_TaskQueue task_queue;
-    io_Reactor* reactor;
-    io_Task reactor_task;
-} io_Loop;
+#include <io/io_loop.h>
 
 typedef struct io_Context {
-    struct io_Loop* loop;
+    io_Loop loop;
     io_Allocator* allocator;
 } io_Context;
 
@@ -29,6 +20,5 @@ io_Context_init(io_Context* context, io_Allocator* allocator)
     (void)allocator;
     return IO_ERR_OK;
 }
-
 
 #endif
