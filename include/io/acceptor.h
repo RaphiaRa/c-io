@@ -13,6 +13,8 @@ typedef struct io_Acceptor {
     io_Descriptor base;
 } io_Acceptor;
 
+DEFINE_DESCRIPTOR_WRAPPERS(io_Acceptor, io_Descriptor)
+
 IO_INLINE(io_Acceptor)
 io_Acceptor_make(io_Context* context)
 {
@@ -23,36 +25,34 @@ io_Acceptor_make(io_Context* context)
 }
 
 IO_INLINE(void)
-io_Acceptor_async_accept(io_Acceptor* acceptor, io_Socket* socket, io_AcceptHandler* ch)
+io_Acceptor_async_accept(io_Acceptor* acceptor, io_Socket* socket, io_AcceptCallback callback, void* user_data)
 {
-    io_Handle_submit(acceptor->base.handle, &io_AcceptOp_create(&acceptor->base, &socket->base, ch)->base);
+    io_Handle_submit(acceptor->base.handle, &io_AcceptOp_create(&acceptor->base, &socket->base, callback, user_data)->base);
 }
 
 IO_INLINE(io_Err)
 io_Acceptor_accept(io_Acceptor* acceptor, io_Socket* socket)
 {
-    return io_accept_perform(&acceptor->base, &socket->base);
+    return io_perform_accept(&acceptor->base, &socket->base);
 }
 
 IO_INLINE(void)
-io_Acceptor_destroy(io_Acceptor* acceptor)
+io_Acceptor_deinit(io_Acceptor* acceptor)
 {
     io_Descriptor_close(&acceptor->base);
 }
 
-DEFINE_DESCRIPTOR_WRAPPERS(io_Acceptor, io_Descriptor)
-
-#define DEFINE_ACCEPT_WRAPPERS(A, S)                                              \
-    IO_INLINE(void)                                                               \
-    A##_async_accept(A* acceptor, S* socket, io_AcceptHandler* handler)           \
-    {                                                                             \
-        return io_Acceptor_async_accept(&acceptor->base, &socket->base, handler); \
-    }                                                                             \
-                                                                                  \
-    IO_INLINE(io_Err)                                                             \
-    A##_accept(A* acceptor, S* socket)                                            \
-    {                                                                             \
-        return io_Acceptor_accept(&acceptor->base, &socket->base);                \
+#define DEFINE_ACCEPT_WRAPPERS(A, S)                                                          \
+    IO_INLINE(void)                                                                           \
+    A##_async_accept(A* acceptor, S* socket, io_AcceptCallback callback, void* user_data)     \
+    {                                                                                         \
+        return io_Acceptor_async_accept(&acceptor->base, &socket->base, callback, user_data); \
+    }                                                                                         \
+                                                                                              \
+    IO_INLINE(io_Err)                                                                         \
+    A##_accept(A* acceptor, S* socket)                                                        \
+    {                                                                                         \
+        return io_Acceptor_accept(&acceptor->base, &socket->base);                            \
     }
 
 #endif

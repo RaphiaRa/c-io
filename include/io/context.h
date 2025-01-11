@@ -24,6 +24,12 @@ io_Context_make(void)
 }
 
 IO_INLINE(void)
+io_Context_run(io_Context* context)
+{
+    io_Loop_run(&context->loop);
+}
+
+IO_INLINE(void)
 io_Context_post(io_Context* context, io_Task* task)
 {
     io_Loop_push_task(&context->loop, task);

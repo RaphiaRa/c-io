@@ -13,60 +13,20 @@
 
 #include <sys/socket.h>
 
-typedef void (*io_AcceptHandler_fn)(void* self, io_Err err);
-
-typedef struct io_AcceptHandler {
-    io_Task base;
-    io_Context* context;
-    io_AcceptHandler_fn fn;
-    void* user_data;
-    io_Err err;
-} io_AcceptHandler;
-
-IO_INLINE(void)
-io_AcceptHandler_perform(void* self)
-{
-    io_AcceptHandler* handler = self;
-    handler->fn(self, handler->err);
-}
-
-IO_INLINE(void)
-io_AcceptHandler_destroy(void* self)
-{
-    io_AcceptHandler* handler = self;
-    io_Allocator_free(io_Context_)
-}
-
-IO_INLINE(void)
-io_AcceptHandler_set_args(io_AcceptHandler* handler, io_Err err)
-{
-    handler->err = err;
-}
-
-IO_INLINE(io_AcceptHandler*)
-io_AcceptHandler_create(io_Context* context, io_AcceptHandler_fn fn, void* user_data)
-{
-
-    io_AcceptHandler handler = {
-        .base = {
-            .destroy = io_AcceptHandler_destroy,
-            .fn = io_AcceptHandler_perform,
-        },
-        .fn = fn,
-        .user_data = user_data,
-    };
-    return handler;
-}
+typedef void (*io_AcceptCallback)(void* user_data, io_Err err);
 
 typedef struct io_AcceptOp {
     io_Op base;
-    io_AcceptHandler* handler;
     io_Descriptor* acceptor;
     io_Descriptor* socket;
+    io_AcceptCallback callback;
+    void* user_data;
+    size_t refcount;
+    io_Err err;
 } io_AcceptOp;
 
 IO_INLINE(io_Err)
-io_accept_perform(const io_Descriptor* acceptor, io_Descriptor* socket)
+io_perform_accept(const io_Descriptor* acceptor, io_Descriptor* socket)
 {
     int accept_fd = io_Descriptor_get_fd(acceptor);
     int ret = accept(accept_fd, NULL, NULL);
@@ -80,24 +40,35 @@ io_accept_perform(const io_Descriptor* acceptor, io_Descriptor* socket)
 IO_INLINE(void)
 io_AcceptOp_complete(io_AcceptOp* op, io_Err err)
 {
-    io_AcceptHandler_set_args(op->handler, err);
-    io_Context_post(io_Descriptor_get_context(op->acceptor), &op->handler->base);
+    op->err = err;
+    io_Op_set_flags(&op->base, IO_OP_COMPLETED);
+    ++op->refcount;
+    io_Context_post(io_Descriptor_get_context(op->acceptor), &op->base.base);
+}
+
+IO_INLINE(void)
+io_AcceptOp_perform(io_AcceptOp* op)
+{
+    int fd = 0;
+    io_Err err = io_perform_accept(op->acceptor, op->socket);
+    if (IO_ERR_HAS(err)
+        && (io_Op_flags(&op->base) & IO_OP_TRYIO)
+        && err.category == io_SystemErrCategory()
+        && (err.code == IO_EAGAIN || err.code == IO_EAGAIN)) {
+        return;
+    }
+    io_AcceptOp_complete(op, err);
 }
 
 IO_INLINE(void)
 io_AcceptOp_fn(void* self)
 {
-    io_AcceptOp* task = self;
-    int fd = 0;
-    io_Err err = io_accept_perform(task->acceptor, task->socket);
-    if (!IO_ERR_HAS(err)) {
-        io_Op_set_flags(&task->base, IO_OP_COMPLETED);
-    } else if ((io_Op_flags(&task->base) & IO_OP_TRYIO)
-               && err.category == io_SystemErrCategory()
-               && (err.code == IO_EAGAIN || err.code == IO_EAGAIN)) {
-        return;
+    io_AcceptOp* op = self;
+    if (io_Op_flags(&op->base) & IO_OP_COMPLETED) {
+        op->callback(op->user_data, op->err);
+    } else {
+        io_AcceptOp_perform(op);
     }
-    io_AcceptOp_complete(task, err);
 }
 
 IO_INLINE(void)
@@ -110,19 +81,23 @@ io_AcceptOp_abort(void* self, io_Err err)
 IO_INLINE(void)
 io_AcceptOp_destroy(void* self)
 {
-    io_AcceptOp* task = self;
-    io_Allocator_free(io_Descriptor_get_context(task->acceptor)->allocator, task);
+    io_AcceptOp* op = self;
+    if (!(--op->refcount)) {
+        io_Allocator_free(io_Descriptor_get_context(op->acceptor)->allocator, op);
+    }
 }
 
 IO_INLINE(io_AcceptOp*)
-io_AcceptOp_create(io_Descriptor* acceptor, io_Descriptor* socket, io_AcceptHandler* handler)
+io_AcceptOp_create(io_Descriptor* acceptor, io_Descriptor* socket, io_AcceptCallback callback, void* user_data)
 {
     io_AcceptOp* task = io_Allocator_alloc(io_Descriptor_get_context(acceptor)->allocator, sizeof(io_AcceptOp));
     IO_REQUIRE(task, "Out of memory");
     io_Op_init(&task->base, IO_OP_READ, io_AcceptOp_fn, io_AcceptOp_abort, io_AcceptOp_destroy);
     task->acceptor = acceptor;
     task->socket = socket;
-    task->handler = handler;
+    task->callback = callback;
+    task->user_data = user_data;
+    task->refcount = 1;
     return task;
 }
 

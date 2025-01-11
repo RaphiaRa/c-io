@@ -95,7 +95,7 @@ io_PollHandleMap_set(io_PollHandleMap* map, int fd, io_PollHandle* handle)
     io_FdToIdxMap_iter iter = io_FdToIdxMap_find(&map->map, fd);
     if (iter == NULL) {
         io_PollHandleVec_push_back(&map->handles, handle);
-        idx = io_PollHandleVec_size(&map->handles);
+        idx = (io_PollHandleVec_size(&map->handles) - 1);
         io_FdToIdxMap_set(&map->map, fd, idx);
     } else {
         idx = iter->value;
@@ -129,9 +129,9 @@ io_PollHandleMap_remove(io_PollHandleMap* map, int fd)
         size_t idx = iter->value;
         io_FdToIdxMap_erase(&map->map, iter);
         if (idx != (io_PollHandleVec_size(&map->handles) - 1)) {
-            io_FdToIdxMap_iter last = io_FdToIdxMap_find(&map->map, (*io_PollHandleVec_end(&map->handles))->fd);
+            io_FdToIdxMap_iter last = io_FdToIdxMap_find(&map->map, io_PollHandleVec_back(&map->handles)->fd);
             last->value = idx;
-            *(io_PollHandleVec_at(&map->handles, idx)) = *(io_PollHandleVec_end(&map->handles));
+            *(io_PollHandleVec_at(&map->handles, idx)) = (io_PollHandleVec_back(&map->handles));
         }
         io_PollHandleVec_resize(&map->handles, (io_PollHandleVec_size(&map->handles) - 1));
     }
@@ -156,12 +156,12 @@ io_PollHandle_submit(void* self, io_Op* op)
     io_Poll* poll = handle->poll;
     io_Op_set_flags(op, IO_OP_TRYIO);
     io_Op_perform(op);
-    if (io_Op_flags(op) | IO_OP_COMPLETED) {
+    if (io_Op_flags(op) & IO_OP_COMPLETED) {
         return;
     }
     io_Op_clear_flags(op, IO_OP_TRYIO);
     io_OpType op_type = op->type;
-    handle->ops[op_type - 1] = op;
+    handle->ops[op_type] = op;
     struct pollfd pfd = {.fd = handle->fd, .events = 0};
     switch (op_type) {
     case IO_OP_READ:
@@ -182,7 +182,7 @@ io_PollHandle_submit(void* self, io_Op* op)
     }
     io_Err err = IO_ERR_OK;
     io_PollFdVec_push_back(&poll->fds, pfd);
-    io_Loop_increase_task_count(&poll->loop);
+    io_Loop_increase_task_count(poll->loop);
 }
 
 IO_INLINE(void)
@@ -218,7 +218,7 @@ IO_INLINE(void)
 io_PollHandle_destroy(void* self)
 {
     io_PollHandle* handle = self;
-    io_PollHandleMap_remove(&handle->poll->loop, handle->fd);
+    io_PollHandleMap_remove(&handle->poll->handles, handle->fd);
     close(handle->fd);
     io_Allocator_free(&handle->poll->handle_allocator.base, self);
 }
@@ -288,26 +288,26 @@ io_Poll_run(void* self, int timeout_ms)
         io_Op* op = handle->ops[op_index];
         if (revents && op) {
             if (revents & events) {
-                io_Loop_push_task(&service->loop, op);
-                io_Loop_decrease_task_count(&service->loop);
+                io_Loop_push_task(service->loop, op);
+                io_Loop_decrease_task_count(service->loop);
             } else if (revents & POLLHUP) {
                 io_Op_abort(op, IO_ERR_EOF);
-                io_Loop_decrease_task_count(&service->loop);
+                io_Loop_decrease_task_count(service->loop);
             } else if (revents & (POLLERR | POLLPRI)) {
                 io_Op_abort(op, io_SystemErr_make(IO_EIO));
-                io_Loop_decrease_task_count(&service->loop);
+                io_Loop_decrease_task_count(service->loop);
             } else if (revents & POLLNVAL) {
                 io_Op_abort(op, io_SystemErr_make(IO_EBADF));
-                io_Loop_decrease_task_count(&service->loop);
+                io_Loop_decrease_task_count(service->loop);
             } else {
                 io_Op_abort(op, IO_ERR_UNKNOWN);
-                io_Loop_decrease_task_count(&service->loop);
+                io_Loop_decrease_task_count(service->loop);
             }
             handle->ops[op_index] = NULL;
         } else if (op) { // reenqueue
             if (handle->timeout_enabled && io_Timer_expired(&handle->timer)) {
                 io_Op_abort(op, io_SystemErr_make(IO_ETIMEDOUT));
-                io_Loop_decrease_task_count(&service->loop);
+                io_Loop_decrease_task_count(service->loop);
                 handle->ops[op_index] = NULL;
             } else {
                 if (reenqueue < i) {
@@ -343,7 +343,7 @@ io_Poll_create(io_Loop* loop)
     io_PollFdVec_init(&service->fds, io_DefaultAllocator());
     io_PollHandleMap_init(&service->handles, io_DefaultAllocator());
     io_PollHandlePool_init(&service->handle_allocator, io_DefaultAllocator(), 16, 8 * 1024);
-    return service;
+    return &service->base;
 }
 
 #endif

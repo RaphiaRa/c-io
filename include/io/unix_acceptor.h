@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <io/acceptor.h>
 #include <io/context.h>
@@ -34,6 +35,11 @@ io_UnixAcceptor_bind(io_UnixAcceptor* acceptor, const char* path)
         return io_SystemErr_make(errno);
     }
     io_Err err = IO_ERR_OK;
+    // Set the socket to non-blocking mode
+    if (fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK) < 0) {
+        err = io_SystemErr_make(errno);
+        goto cleanup_socket;
+    }
     struct sockaddr_un addr = {0};
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
@@ -53,9 +59,9 @@ cleanup_socket:
 }
 
 IO_INLINE(void)
-io_UnixAcceptor_destroy(io_UnixAcceptor* acceptor)
+io_UnixAcceptor_deinit(io_UnixAcceptor* acceptor)
 {
-    io_Acceptor_destroy(&acceptor->base);
+    io_Acceptor_deinit(&acceptor->base);
 }
 
 DEFINE_DESCRIPTOR_WRAPPERS(io_UnixAcceptor, io_Acceptor)

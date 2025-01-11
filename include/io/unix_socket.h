@@ -17,9 +17,9 @@ io_UnixSocket_make(io_Context* context)
 }
 
 IO_INLINE(void)
-io_UnixSocket_destroy(io_UnixSocket* socket)
+io_UnixSocket_deinit(io_UnixSocket* socket)
 {
-    io_Socket_destroy(&socket->base);
+    io_Socket_deinit(&socket->base);
 }
 
 DEFINE_SOCKET_WRAPPERS(io_UnixSocket, io_Socket)

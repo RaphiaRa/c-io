@@ -49,6 +49,9 @@
     IO_INLINE(TYPE*)                                                                                       \
     NAME##_end(NAME* vec) IO_MAYBE_UNUSED;                                                                 \
                                                                                                            \
+    IO_INLINE(TYPE)                                                                                       \
+    NAME##_back(NAME* vec) IO_MAYBE_UNUSED;                                                                \
+                                                                                                           \
     IO_INLINE(void)                                                                                        \
     NAME##_init(NAME* vec, io_Allocator* allocator)                                                        \
     {                                                                                                      \
@@ -146,6 +149,12 @@
     NAME##_end(NAME* vec)                                                                                  \
     {                                                                                                      \
         return vec->data + vec->size;                                                                      \
+    }                                                                                                      \
+                                                                                                           \
+    IO_INLINE(TYPE)                                                                                        \
+    NAME##_back(NAME* vec)                                                                                 \
+    {                                                                                                      \
+        return vec->data[vec->size - 1];                                                                   \
     }
 
 #endif

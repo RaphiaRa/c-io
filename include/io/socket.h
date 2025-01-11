@@ -64,7 +64,7 @@ io_Socket_async_write(io_Socket* socket, const void* buf, size_t size, io_WriteH
 }
 
 IO_INLINE(void)
-io_Socket_destroy(io_Socket* socket)
+io_Socket_deinit(io_Socket* socket)
 {
     io_Descriptor_close(&socket->base);
 }

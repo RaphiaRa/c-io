@@ -22,6 +22,7 @@ io_Loop_init(io_Loop* loop, io_Reactor* reactor)
     loop->num_tasks = 0;
     loop->queue = (io_TaskQueue){0};
     loop->reactor = reactor;
+    io_TaskQueue_push(&loop->queue, &loop->reactor_task);
 }
 
 IO_INLINE(void)
@@ -59,7 +60,7 @@ io_Loop_run(io_Loop* loop)
                 if (task->destroy)
                     task->destroy(task);
                 --loop->num_tasks;
-                return;
+                break;
             }
         }
     }
