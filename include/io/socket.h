@@ -5,24 +5,15 @@
 #include <io/descriptor.h>
 #include <io/read.h>
 #include <io/task.h>
+#include <io/write.h>
 
 #include <stddef.h>
-
-typedef struct io_WriteHandler {
-    void (*fn)(void* self, size_t size, io_Err err);
-    void (*destroy)(void* self);
-} io_WriteHandler;
-
-IO_INLINE(void)
-io_WriteHandler_complete(io_WriteHandler* handler, size_t size, io_Err err)
-{
-    handler->fn(handler, size, err);
-    handler->destroy(handler);
-}
 
 typedef struct io_Socket {
     io_Descriptor base;
 } io_Socket;
+
+DEFINE_DESCRIPTOR_WRAPPERS(io_Socket, io_Descriptor)
 
 IO_INLINE(io_Socket)
 io_Socket_make(io_Context* context)
@@ -36,31 +27,25 @@ io_Socket_make(io_Context* context)
 IO_INLINE(io_Err)
 io_Socket_read(io_Socket* socket, void* addr, size_t* size)
 {
-    return io_read_perform(&socket->base, addr, size);
+    return io_perform_read(&socket->base, addr, size);
 }
 
 IO_INLINE(io_Err)
-io_Socket_write(io_Socket* socket, const void* buf, size_t* size)
+io_Socket_write(io_Socket* socket, const void* addr, size_t* size)
 {
-    (void)socket;
-    (void)buf;
-    (void)size;
-    return IO_ERR_OK;
+    return io_perform_write(&socket->base, addr, size);
 }
 
 IO_INLINE(void)
-io_Socket_async_read(io_Socket* socket, void* addr, size_t size, io_ReadHandler* handler)
+io_Socket_async_read(io_Socket* socket, void* addr, size_t size, io_ReadCallback callback, void* user_data)
 {
-    io_Handle_submit(socket->base.handle, &io_ReadOp_create(&socket->base, addr, size, handler)->base);
+    io_Handle_submit(socket->base.handle, &io_ReadOp_create(&socket->base, addr, size, callback, user_data)->base);
 }
 
 IO_INLINE(void)
-io_Socket_async_write(io_Socket* socket, const void* buf, size_t size, io_WriteHandler* ch)
+io_Socket_async_write(io_Socket* socket, const void* addr, size_t size, io_WriteCallback callback, void* user_data)
 {
-    (void)socket;
-    (void)buf;
-    (void)size;
-    (void)ch;
+    io_Handle_submit(socket->base.handle, &io_WriteOp_create(&socket->base, addr, size, callback, user_data)->base);
 }
 
 IO_INLINE(void)
@@ -69,13 +54,29 @@ io_Socket_deinit(io_Socket* socket)
     io_Descriptor_close(&socket->base);
 }
 
-DEFINE_DESCRIPTOR_WRAPPERS(io_Socket, io_Descriptor)
-
-#define DEFINE_SOCKET_WRAPPERS(P, B)                \
-    IO_INLINE(io_Err)                               \
-    P##_read(P* socket, void* addr, size_t* size)   \
-    {                                               \
-        return B##_read(&socket->base, addr, size); \
+#define DEFINE_SOCKET_WRAPPERS(P, B)                                                                      \
+    IO_INLINE(io_Err)                                                                                     \
+    P##_read(P* socket, void* addr, size_t* size)                                                         \
+    {                                                                                                     \
+        return B##_read(&socket->base, addr, size);                                                       \
+    }                                                                                                     \
+                                                                                                          \
+    IO_INLINE(void)                                                                                       \
+    P##_async_read(P* socket, void* addr, size_t size, io_ReadCallback callback, void* user_data)         \
+    {                                                                                                     \
+        B##_async_read(&socket->base, addr, size, callback, user_data);                  \
+    }                                                                                                     \
+                                                                                                          \
+    IO_INLINE(io_Err)                                                                                     \
+    P##_write(P* socket, const void* addr, size_t* size)                                                  \
+    {                                                                                                     \
+        return B##_write(&socket->base, addr, size);                                                      \
+    }                                                                                                     \
+                                                                                                          \
+    IO_INLINE(void)                                                                                       \
+    P##_async_write(P* socket, const void* addr, size_t size, io_WriteCallback callback, void* user_data) \
+    {                                                                                                     \
+        B##_async_write(&socket->base, addr, size, callback, user_data);                 \
     }
 
 #endif

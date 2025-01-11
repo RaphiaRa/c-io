@@ -42,17 +42,17 @@ io_Acceptor_deinit(io_Acceptor* acceptor)
     io_Descriptor_close(&acceptor->base);
 }
 
-#define DEFINE_ACCEPT_WRAPPERS(A, S)                                                          \
-    IO_INLINE(void)                                                                           \
-    A##_async_accept(A* acceptor, S* socket, io_AcceptCallback callback, void* user_data)     \
-    {                                                                                         \
-        io_Acceptor_async_accept(&acceptor->base, &socket->base, callback, user_data); \
-    }                                                                                         \
-                                                                                              \
-    IO_INLINE(io_Err)                                                                         \
-    A##_accept(A* acceptor, S* socket)                                                        \
-    {                                                                                         \
-        return io_Acceptor_accept(&acceptor->base, &socket->base);                            \
+#define DEFINE_ACCEPT_WRAPPERS(A, S)                                                      \
+    IO_INLINE(void)                                                                       \
+    A##_async_accept(A* acceptor, S* socket, io_AcceptCallback callback, void* user_data) \
+    {                                                                                     \
+        io_Acceptor_async_accept(&acceptor->base, &socket->base, callback, user_data);    \
+    }                                                                                     \
+                                                                                          \
+    IO_INLINE(io_Err)                                                                     \
+    A##_accept(A* acceptor, S* socket)                                                    \
+    {                                                                                     \
+        return io_Acceptor_accept(&acceptor->base, &socket->base);                        \
     }
 
 #endif
