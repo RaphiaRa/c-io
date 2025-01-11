@@ -17,7 +17,9 @@ typedef void (*io_AcceptHandler_fn)(void* self, io_Err err);
 
 typedef struct io_AcceptHandler {
     io_Task base;
+    io_Context* context;
     io_AcceptHandler_fn fn;
+    void* user_data;
     io_Err err;
 } io_AcceptHandler;
 
@@ -29,9 +31,31 @@ io_AcceptHandler_perform(void* self)
 }
 
 IO_INLINE(void)
+io_AcceptHandler_destroy(void* self)
+{
+    io_AcceptHandler* handler = self;
+    io_Allocator_free(io_Context_)
+}
+
+IO_INLINE(void)
 io_AcceptHandler_set_args(io_AcceptHandler* handler, io_Err err)
 {
     handler->err = err;
+}
+
+IO_INLINE(io_AcceptHandler*)
+io_AcceptHandler_create(io_Context* context, io_AcceptHandler_fn fn, void* user_data)
+{
+
+    io_AcceptHandler handler = {
+        .base = {
+            .destroy = io_AcceptHandler_destroy,
+            .fn = io_AcceptHandler_perform,
+        },
+        .fn = fn,
+        .user_data = user_data,
+    };
+    return handler;
 }
 
 typedef struct io_AcceptOp {

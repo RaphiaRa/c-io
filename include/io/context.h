@@ -29,4 +29,10 @@ io_Context_post(io_Context* context, io_Task* task)
     io_Loop_push_task(&context->loop, task);
 }
 
+IO_INLINE(io_Allocator*)
+io_Context_allocator(io_Context* context)
+{
+    return context->allocator;
+}
+
 #endif
