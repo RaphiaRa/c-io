@@ -136,7 +136,7 @@
     NAME##_cat(const NAME* vec, size_t index)                                                              \
     {                                                                                                      \
         IO_ASSERT(index <= vec->size, "index exceeds vector size");                                        \
-        return vec->data + index;                                                                          \
+        return (const TYPE*)&vec->data[index];                                                                          \
     }                                                                                                      \
                                                                                                            \
     IO_INLINE(TYPE*)                                                                                       \

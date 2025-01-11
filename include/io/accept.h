@@ -49,7 +49,6 @@ io_AcceptOp_complete(io_AcceptOp* op, io_Err err)
 IO_INLINE(void)
 io_AcceptOp_perform(io_AcceptOp* op)
 {
-    int fd = 0;
     io_Err err = io_perform_accept(op->acceptor, op->socket);
     if (IO_ERR_HAS(err)
         && (io_Op_flags(&op->base) & IO_OP_TRYIO)

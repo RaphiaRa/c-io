@@ -18,6 +18,9 @@ typedef struct io_UnixAcceptor {
     io_Acceptor base;
 } io_UnixAcceptor;
 
+DEFINE_DESCRIPTOR_WRAPPERS(io_UnixAcceptor, io_Acceptor)
+DEFINE_ACCEPT_WRAPPERS(io_UnixAcceptor, io_UnixSocket)
+
 IO_INLINE(io_UnixAcceptor)
 io_UnixAcceptor_make(io_Context* ctx)
 {
@@ -63,8 +66,5 @@ io_UnixAcceptor_deinit(io_UnixAcceptor* acceptor)
 {
     io_Acceptor_deinit(&acceptor->base);
 }
-
-DEFINE_DESCRIPTOR_WRAPPERS(io_UnixAcceptor, io_Acceptor)
-DEFINE_ACCEPT_WRAPPERS(io_UnixAcceptor, io_UnixSocket)
 
 #endif

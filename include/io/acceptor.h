@@ -46,7 +46,7 @@ io_Acceptor_deinit(io_Acceptor* acceptor)
     IO_INLINE(void)                                                                           \
     A##_async_accept(A* acceptor, S* socket, io_AcceptCallback callback, void* user_data)     \
     {                                                                                         \
-        return io_Acceptor_async_accept(&acceptor->base, &socket->base, callback, user_data); \
+        io_Acceptor_async_accept(&acceptor->base, &socket->base, callback, user_data); \
     }                                                                                         \
                                                                                               \
     IO_INLINE(io_Err)                                                                         \

@@ -24,6 +24,12 @@ io_Context_make(void)
 }
 
 IO_INLINE(void)
+io_Context_deinit(io_Context* context)
+{
+    io_Loop_deinit(&context->loop);
+}
+
+IO_INLINE(void)
 io_Context_run(io_Context* context)
 {
     io_Loop_run(&context->loop);

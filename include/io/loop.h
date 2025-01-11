@@ -66,4 +66,10 @@ io_Loop_run(io_Loop* loop)
     }
 }
 
+IO_INLINE(void)
+io_Loop_deinit(io_Loop* loop)
+{
+    io_Reactor_destroy(loop->reactor);
+}
+
 #endif

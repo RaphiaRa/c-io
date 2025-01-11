@@ -180,7 +180,6 @@ io_PollHandle_submit(void* self, io_Op* op)
             handle->timeout_enabled = false;
         }
     }
-    io_Err err = IO_ERR_OK;
     io_PollFdVec_push_back(&poll->fds, pfd);
     io_Loop_increase_task_count(poll->loop);
 }
@@ -203,7 +202,7 @@ io_PollHandle_cancel(void* self)
 IO_INLINE(int)
 io_PollHandle_get_fd(const void* self)
 {
-    io_PollHandle* handle = self;
+    const io_PollHandle* handle = self;
     return handle->fd;
 }
 
@@ -253,7 +252,7 @@ io_Poll_create_handle(void* self, int fd)
     IO_REQUIRE(handle, "Out of memory");
     io_PollHandle_init(handle, poll, fd);
     io_PollHandleMap_set(&poll->handles, handle->fd, handle);
-    return handle;
+    return &handle->base;
 }
 
 IO_INLINE(void)
@@ -288,7 +287,7 @@ io_Poll_run(void* self, int timeout_ms)
         io_Op* op = handle->ops[op_index];
         if (revents && op) {
             if (revents & events) {
-                io_Loop_push_task(service->loop, op);
+                io_Loop_push_task(service->loop, &op->base);
                 io_Loop_decrease_task_count(service->loop);
             } else if (revents & POLLHUP) {
                 io_Op_abort(op, IO_ERR_EOF);
