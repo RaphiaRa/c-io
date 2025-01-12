@@ -193,7 +193,6 @@ io_PollHandle_cancel(void* self)
         if (op) {
             handle->ops[i] = NULL;
             io_Op_abort(op, io_SystemErr_make(IO_ECANCELED));
-            io_Op_destroy(op);
             io_Loop_decrease_task_count(handle->poll->loop);
         }
     }

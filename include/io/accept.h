@@ -21,7 +21,6 @@ typedef struct io_AcceptOp {
     io_Descriptor* socket;
     io_AcceptCallback callback;
     void* user_data;
-    size_t refcount;
     io_Err err;
 } io_AcceptOp;
 
@@ -38,11 +37,18 @@ io_perform_accept(const io_Descriptor* acceptor, io_Descriptor* socket)
 }
 
 IO_INLINE(void)
+io_AcceptOp_finalize(io_AcceptOp* op)
+{
+    io_Allocator* allocator = io_Descriptor_get_context(op->acceptor)->allocator;
+    op->callback(op->user_data, op->err);
+    io_Allocator_free(allocator, op);
+}
+
+IO_INLINE(void)
 io_AcceptOp_complete(io_AcceptOp* op, io_Err err)
 {
     op->err = err;
     io_Op_set_flags(&op->base, IO_OP_COMPLETED);
-    ++op->refcount;
     io_Context_post(io_Descriptor_get_context(op->acceptor), &op->base.base);
 }
 
@@ -64,7 +70,7 @@ io_AcceptOp_fn(void* self)
 {
     io_AcceptOp* op = self;
     if (io_Op_flags(&op->base) & IO_OP_COMPLETED) {
-        op->callback(op->user_data, op->err);
+        io_AcceptOp_finalize(op);
     } else {
         io_AcceptOp_perform(op);
     }
@@ -77,26 +83,16 @@ io_AcceptOp_abort(void* self, io_Err err)
     io_AcceptOp_complete(task, err);
 }
 
-IO_INLINE(void)
-io_AcceptOp_destroy(void* self)
-{
-    io_AcceptOp* op = self;
-    if (!(--op->refcount)) {
-        io_Allocator_free(io_Descriptor_get_context(op->acceptor)->allocator, op);
-    }
-}
-
 IO_INLINE(io_AcceptOp*)
 io_AcceptOp_create(io_Descriptor* acceptor, io_Descriptor* socket, io_AcceptCallback callback, void* user_data)
 {
     io_AcceptOp* task = io_Allocator_alloc(io_Descriptor_get_context(acceptor)->allocator, sizeof(io_AcceptOp));
     IO_REQUIRE(task, "Out of memory");
-    io_Op_init(&task->base, IO_OP_READ, io_AcceptOp_fn, io_AcceptOp_abort, io_AcceptOp_destroy);
+    io_Op_init(&task->base, IO_OP_READ, io_AcceptOp_fn, io_AcceptOp_abort);
     task->acceptor = acceptor;
     task->socket = socket;
     task->callback = callback;
     task->user_data = user_data;
-    task->refcount = 1;
     return task;
 }
 

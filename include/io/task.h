@@ -6,11 +6,9 @@
 #include <io/err.h>
 
 typedef void (*io_Task_fn)(void* self);
-typedef void (*io_Task_destroy)(void* self);
 
 typedef struct io_Task {
     io_Task_fn fn;
-    io_Task_destroy destroy;
     struct io_Task* next;
 } io_Task;
 
@@ -35,10 +33,9 @@ typedef struct io_Op {
 } io_Op;
 
 IO_INLINE(void)
-io_Op_init(io_Op* task, io_OpType type, io_Task_fn fn, io_Op_abort_fn abort, io_Task_destroy destroy)
+io_Op_init(io_Op* task, io_OpType type, io_Task_fn fn, io_Op_abort_fn abort)
 {
     task->base.fn = fn;
-    task->base.destroy = destroy;
     task->type = type;
     task->abort = abort;
     task->flags = 0;
@@ -48,12 +45,6 @@ IO_INLINE(void)
 io_Op_perform(io_Op* op)
 {
     op->base.fn(op);
-}
-
-IO_INLINE(void)
-io_Op_destroy(io_Op* op)
-{
-    op->base.destroy(op);
 }
 
 IO_INLINE(void)

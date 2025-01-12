@@ -22,7 +22,6 @@ typedef struct io_WriteOp {
     const void* addr;
     void* user_data;
     size_t size;
-    size_t refcount;
     io_Err err;
 } io_WriteOp;
 
@@ -40,12 +39,19 @@ io_perform_write(io_Descriptor* socket, const void* addr, size_t* size)
 }
 
 IO_INLINE(void)
+io_WriteOp_finalize(io_WriteOp* op)
+{
+    io_Allocator* allocator = io_Descriptor_get_context(op->socket)->allocator;
+    op->callback(op->user_data, op->size, op->err);
+    io_Allocator_free(allocator, op);
+}
+
+IO_INLINE(void)
 io_WriteOp_complete(io_WriteOp* op, size_t size, io_Err err)
 {
     op->err = err;
     op->size = size;
     io_Op_set_flags(&op->base, IO_OP_COMPLETED);
-    ++op->refcount;
     io_Context_post(io_Descriptor_get_context(op->socket), &op->base.base);
 }
 
@@ -68,7 +74,7 @@ io_WriteOp_fn(void* self)
 {
     io_WriteOp* op = self;
     if (io_Op_flags(&op->base) & IO_OP_COMPLETED) {
-        op->callback(op->user_data, op->size, op->err);
+        io_WriteOp_finalize(op);
     } else {
         io_WriteOp_perform(op);
     }
@@ -81,27 +87,17 @@ io_WriteOp_abort(void* self, io_Err err)
     io_WriteOp_complete(task, 0, err);
 }
 
-IO_INLINE(void)
-io_WriteOp_destroy(void* self)
-{
-    io_WriteOp* op = self;
-    if (!(--op->refcount)) {
-        io_Allocator_free(io_Descriptor_get_context(op->socket)->allocator, op);
-    }
-}
-
 IO_INLINE(io_WriteOp*)
 io_WriteOp_create(io_Descriptor* socket, const void* addr, size_t size, io_WriteCallback callback, void* user_data)
 {
     io_WriteOp* op = io_Allocator_alloc(io_Descriptor_get_context(socket)->allocator, sizeof(io_WriteOp));
     IO_REQUIRE(op, "Out of memory");
-    io_Op_init(&op->base, IO_OP_WRITE, io_WriteOp_fn, io_WriteOp_abort, io_WriteOp_destroy);
+    io_Op_init(&op->base, IO_OP_WRITE, io_WriteOp_fn, io_WriteOp_abort);
     op->socket = socket;
     op->addr = addr;
     op->size = size;
     op->callback = callback;
     op->user_data = user_data;
-    op->refcount = 1;
     return op;
 }
 

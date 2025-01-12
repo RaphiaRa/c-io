@@ -22,7 +22,6 @@ typedef struct io_ReadOp {
     void* addr;
     void* user_data;
     size_t size;
-    size_t refcount;
     io_Err err;
 } io_ReadOp;
 
@@ -40,12 +39,19 @@ io_perform_read(io_Descriptor* socket, void* addr, size_t* size)
 }
 
 IO_INLINE(void)
+io_ReadOp_finalize(io_ReadOp* op)
+{
+    io_Allocator* allocator = io_Descriptor_get_context(op->socket)->allocator;
+    op->callback(op->user_data, op->size, op->err);
+    io_Allocator_free(allocator, op);
+}
+
+IO_INLINE(void)
 io_ReadOp_complete(io_ReadOp* op, size_t size, io_Err err)
 {
     op->err = err;
     op->size = size;
     io_Op_set_flags(&op->base, IO_OP_COMPLETED);
-    ++op->refcount;
     io_Context_post(io_Descriptor_get_context(op->socket), &op->base.base);
 }
 
@@ -68,7 +74,7 @@ io_ReadOp_fn(void* self)
 {
     io_ReadOp* op = self;
     if (io_Op_flags(&op->base) & IO_OP_COMPLETED) {
-        op->callback(op->user_data, op->size, op->err);
+        io_ReadOp_finalize(op);
     } else {
         io_ReadOp_perform(op);
     }
@@ -81,27 +87,17 @@ io_ReadOp_abort(void* self, io_Err err)
     io_ReadOp_complete(task, 0, err);
 }
 
-IO_INLINE(void)
-io_ReadOp_destroy(void* self)
-{
-    io_ReadOp* op = self;
-    if (!(--op->refcount)) {
-        io_Allocator_free(io_Descriptor_get_context(op->socket)->allocator, op);
-    }
-}
-
 IO_INLINE(io_ReadOp*)
 io_ReadOp_create(io_Descriptor* socket, void* addr, size_t size, io_ReadCallback callback, void* user_data)
 {
     io_ReadOp* op = io_Allocator_alloc(io_Descriptor_get_context(socket)->allocator, sizeof(io_ReadOp));
     IO_REQUIRE(op, "Out of memory");
-    io_Op_init(&op->base, IO_OP_READ, io_ReadOp_fn, io_ReadOp_abort, io_ReadOp_destroy);
+    io_Op_init(&op->base, IO_OP_READ, io_ReadOp_fn, io_ReadOp_abort);
     op->socket = socket;
     op->addr = addr;
     op->size = size;
     op->callback = callback;
     op->user_data = user_data;
-    op->refcount = 1;
     return op;
 }
 
