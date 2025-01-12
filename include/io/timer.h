@@ -87,8 +87,8 @@ io_Timer_set(io_Timer* timer, io_Duration duration)
 {
     time_t now = 0;
     io_Err err = io_Timer_monotonic_now(&now);
-    IO_ASSERT(!IO_ERR_HAS(err), "io_Timer_monotonic_now failed");
-    if (IO_ERR_HAS(err))
+    IO_ASSERT(io_ok(err), "io_Timer_monotonic_now failed");
+    if (!io_ok(err))
         return err;
     timer->expire = now + io_Duration_to_seconds(duration);
     return IO_ERR_OK;
@@ -99,10 +99,10 @@ io_Timer_expired(io_Timer* timer)
 {
     time_t now = 0;
     io_Err err = io_Timer_monotonic_now(&now);
-    IO_ASSERT(!IO_ERR_HAS(err), "io_Timer_monotonic_now failed");
+    IO_ASSERT(io_ok(err), "io_Timer_monotonic_now failed");
     /* We don't return the error here, as it's already handled in io_Timer_set
      * and we can safely assume that the error won't happen here. */
-    if (IO_ERR_HAS(err))
+    if (!io_ok(err))
         return true;
     return now >= timer->expire;
 }

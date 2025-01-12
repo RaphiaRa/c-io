@@ -50,7 +50,7 @@ IO_INLINE(void)
 io_AcceptOp_perform(io_AcceptOp* op)
 {
     io_Err err = io_perform_accept(op->acceptor, op->socket);
-    if (IO_ERR_HAS(err)
+    if (!io_ok(err)
         && (io_Op_flags(&op->base) & IO_OP_TRYIO)
         && err.category == io_SystemErrCategory()
         && (err.code == IO_EAGAIN || err.code == IO_EAGAIN)) {

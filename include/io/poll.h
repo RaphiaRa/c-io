@@ -176,7 +176,7 @@ io_PollHandle_submit(void* self, io_Op* op)
     }
     if (handle->timeout_enabled) {
         io_Err err = io_Timer_set(&handle->timer, io_Seconds(IO_DEFAULT_TIMEOUT));
-        if (IO_ERR_HAS(err)) {
+        if (!io_ok(err)) {
             handle->timeout_enabled = false;
         }
     }
