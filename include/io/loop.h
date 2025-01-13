@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2025 c-io Contributers
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ */
+
 #ifndef IO_LOOP_H
 #define IO_LOOP_H
 

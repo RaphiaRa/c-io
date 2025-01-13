@@ -1,9 +1,16 @@
+/*
+ * SPDX-FileCopyrightText: 2025 c-io Contributers
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ */
+
 #ifndef IO_ERR_H
 #define IO_ERR_H
 
 #include <io/config.h>
 
 #include <stdio.h>
+#include <stdbool.h>
 
 typedef struct io_ErrCategory {
     const char* name;
