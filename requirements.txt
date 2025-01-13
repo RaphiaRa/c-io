@@ -1,0 +1,2 @@
+networkx == 2.5.1
+reuse == 5.0.2
