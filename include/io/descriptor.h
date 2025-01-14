@@ -58,6 +58,14 @@ io_Descriptor_get_context(io_Descriptor* descriptor)
 }
 
 IO_INLINE(void)
+io_Descriptor_cancel(io_Descriptor* descriptor)
+{
+    if (descriptor->handle) {
+        io_Handle_cancel(descriptor->handle);
+    }
+}
+
+IO_INLINE(void)
 io_Descriptor_close(io_Descriptor* descriptor)
 {
     io_Descriptor_clear_fd(descriptor);
@@ -86,6 +94,12 @@ io_Descriptor_close(io_Descriptor* descriptor)
     P##_get_context(P* descriptor)                 \
     {                                              \
         return B##_get_context(&descriptor->base); \
+    }                                              \
+                                                   \
+    IO_INLINE(void)                                \
+    P##_cancel(P* descriptor)                      \
+    {                                              \
+        B##_cancel(&descriptor->base);             \
     }
 
 #endif
