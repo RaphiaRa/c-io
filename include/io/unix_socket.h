@@ -13,6 +13,8 @@ typedef struct io_UnixSocket {
     io_Socket base;
 } io_UnixSocket;
 
+DEFINE_DESCRIPTOR_WRAPPERS(io_UnixSocket, io_Socket)
+
 IO_INLINE(io_UnixSocket)
 io_UnixSocket_make(io_Context* context)
 {
