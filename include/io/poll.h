@@ -194,10 +194,9 @@ IO_INLINE(void)
 io_PollHandle_cancel(void* self)
 {
     io_PollHandle* handle = self;
-    for (int i = (IO_OP_MAX - 1); --i;) {
-        io_Op* op = handle->ops[i];
+    for (int i = IO_OP_MAX; --i;) {
+        io_Op* op = IO_MOVE_PTR(handle->ops[i-1]);
         if (op) {
-            handle->ops[i] = NULL;
             io_Op_abort(op, io_SystemErr_make(IO_ECANCELED));
             io_Loop_decrease_task_count(handle->poll->loop);
         }
