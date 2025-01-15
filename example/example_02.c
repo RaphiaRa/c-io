@@ -22,7 +22,7 @@ Connection_destroy(Connection* connection)
 static void
 Connection_handle_write(void* self, size_t size, io_Err err)
 {
-    if (IO_ERR_HAS(err)) {
+    if (!io_ok(err)) {
         printf("Failed to read bytes");
     } else {
         printf("Wrote %d of bytes\n", (int)size);
@@ -49,7 +49,7 @@ Server_make(io_Context* context)
 {
     Server server = {
         .context = context,
-        .acceptor = {io_Acceptor_make(context)},
+        .acceptor = io_UnixAcceptor_make(context),
         .accepting = NULL,
     };
     return server;
@@ -69,7 +69,7 @@ static void
 Server_handle_accept(void* self, io_Err err)
 {
     Server* server = self;
-    if (IO_ERR_HAS(err)) {
+    if (!io_ok(err)) {
         printf("Failed to accept connection: %s\n", io_Err_msg(err));
         return;
     }
@@ -91,7 +91,7 @@ Server_start(Server* server, const char* path)
 {
     unlink(path);
     io_Err err = IO_ERR_OK;
-    if (IO_ERR_HAS(err = io_UnixAcceptor_bind(&server->acceptor, path))) {
+    if (!io_ok(err = io_UnixAcceptor_bind(&server->acceptor, path))) {
         return err;
     }
     Server_accept(server);
@@ -103,7 +103,7 @@ int main(void)
     io_Err err = IO_ERR_OK;
     io_Context context = io_Context_make();
     Server server = Server_make(&context);
-    if (IO_ERR_HAS(err = Server_start(&server, "/tmp/test"))) {
+    if (!io_ok(err = Server_start(&server, "/tmp/test"))) {
         goto on_error;
     }
     io_Context_run(&context);
