@@ -22,13 +22,25 @@ typedef struct io_Loop {
     io_Task reactor_task;
 } io_Loop;
 
-IO_INLINE(void)
-io_Loop_init(io_Loop* loop, io_Reactor* reactor)
+IO_INLINE(io_Loop*)
+io_Loop_create(void)
 {
+    io_Loop* loop = io_alloc(sizeof(io_Loop));
     loop->num_tasks = 0;
     loop->queue = (io_TaskQueue){0};
-    loop->reactor = reactor;
+    loop->reactor = NULL;
     io_TaskQueue_push(&loop->queue, &loop->reactor_task);
+    return loop;
+}
+
+/** io_Loop_set_reactor
+ * @brief Set the reactor for the loop, the loop will take ownership
+ * of the reactor and will destroy it when the loop is destroyed.
+ */
+IO_INLINE(void)
+io_Loop_set_reactor(io_Loop* loop, io_Reactor* reactor)
+{
+    loop->reactor = reactor;
 }
 
 IO_INLINE(void)
@@ -53,6 +65,7 @@ io_Loop_increase_task_count(io_Loop* loop)
 IO_INLINE(void)
 io_Loop_run(io_Loop* loop)
 {
+    IO_REQUIRE(loop->reactor, "Reactor must be set before running the loop");
     while (loop->num_tasks > 0) {
         while (1) {
             io_Task* task = io_TaskQueue_pop(&loop->queue);
@@ -71,9 +84,11 @@ io_Loop_run(io_Loop* loop)
 }
 
 IO_INLINE(void)
-io_Loop_deinit(io_Loop* loop)
+io_Loop_destroy(io_Loop* loop)
 {
-    io_Reactor_destroy(loop->reactor);
+    if (loop->reactor)
+        io_Reactor_destroy(loop->reactor);
+    io_free(loop);
 }
 
 #endif

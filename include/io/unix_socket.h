@@ -15,13 +15,18 @@ typedef struct io_UnixSocket {
 
 DEFINE_DESCRIPTOR_WRAPPERS(io_UnixSocket, io_Socket)
 
-IO_INLINE(io_UnixSocket)
-io_UnixSocket_make(io_Context* context)
+IO_INLINE(void)
+io_UnixSocket_init(io_UnixSocket* socket, io_Context* ctx)
 {
-    io_UnixSocket unix_socket = {
-        .base = io_Socket_make(context),
-    };
-    return unix_socket;
+    io_Socket_init(&socket->base, ctx);
+}
+
+IO_INLINE(io_UnixSocket)
+io_UnixSocket_make(io_Context* ctx)
+{
+    io_UnixSocket socket = {0};
+    io_UnixSocket_init(&socket, ctx);
+    return socket;
 }
 
 IO_INLINE(void)

@@ -16,13 +16,11 @@ typedef struct io_Descriptor {
     io_Handle* handle;
 } io_Descriptor;
 
-IO_INLINE(io_Descriptor)
-io_Descriptor_make(io_Context* context)
+IO_INLINE(void)
+io_Descriptor_init(io_Descriptor* descriptor, io_Context* context)
 {
-    io_Descriptor descriptor;
-    descriptor.context = context;
-    descriptor.handle = NULL;
-    return descriptor;
+    descriptor->context = context;
+    descriptor->handle = NULL;
 }
 
 IO_INLINE(void)
@@ -48,7 +46,7 @@ io_Descriptor_set_fd(io_Descriptor* descriptor, int fd)
     if (descriptor->handle) {
         io_Descriptor_clear_fd(descriptor);
     }
-    descriptor->handle = io_Reactor_create_handle(descriptor->context->loop.reactor, fd);
+    descriptor->handle = io_Reactor_create_handle(descriptor->context->loop->reactor, fd);
 }
 
 IO_INLINE(io_Context*)

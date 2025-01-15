@@ -21,13 +21,10 @@ typedef struct io_Socket {
 
 DEFINE_DESCRIPTOR_WRAPPERS(io_Socket, io_Descriptor)
 
-IO_INLINE(io_Socket)
-io_Socket_make(io_Context* context)
+IO_INLINE(void)
+io_Socket_init(io_Socket* socket, io_Context* ctx)
 {
-    io_Socket socket = {
-        .base = io_Descriptor_make(context),
-    };
-    return socket;
+    io_Descriptor_init(&socket->base, ctx);
 }
 
 IO_INLINE(io_Err)
@@ -70,7 +67,7 @@ io_Socket_deinit(io_Socket* socket)
     IO_INLINE(void)                                                                                       \
     P##_async_read(P* socket, void* addr, size_t size, io_ReadCallback callback, void* user_data)         \
     {                                                                                                     \
-        B##_async_read(&socket->base, addr, size, callback, user_data);                  \
+        B##_async_read(&socket->base, addr, size, callback, user_data);                                   \
     }                                                                                                     \
                                                                                                           \
     IO_INLINE(io_Err)                                                                                     \
@@ -82,7 +79,7 @@ io_Socket_deinit(io_Socket* socket)
     IO_INLINE(void)                                                                                       \
     P##_async_write(P* socket, const void* addr, size_t size, io_WriteCallback callback, void* user_data) \
     {                                                                                                     \
-        B##_async_write(&socket->base, addr, size, callback, user_data);                 \
+        B##_async_write(&socket->base, addr, size, callback, user_data);                                  \
     }
 
 #endif

@@ -9,10 +9,10 @@
 
 #include <io/config.h>
 
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-#include <fcntl.h>
 
 #include <io/acceptor.h>
 #include <io/context.h>
@@ -27,12 +27,17 @@ typedef struct io_UnixAcceptor {
 DEFINE_DESCRIPTOR_WRAPPERS(io_UnixAcceptor, io_Acceptor)
 DEFINE_ACCEPT_WRAPPERS(io_UnixAcceptor, io_UnixSocket)
 
+IO_INLINE(void)
+io_UnixAcceptor_init(io_UnixAcceptor* acceptor, io_Context* ctx)
+{
+    io_Acceptor_init(&acceptor->base, ctx);
+}
+
 IO_INLINE(io_UnixAcceptor)
 io_UnixAcceptor_make(io_Context* ctx)
 {
-    io_UnixAcceptor acceptor = {
-        .base = io_Acceptor_make(ctx),
-    };
+    io_UnixAcceptor acceptor = {0};
+    io_UnixAcceptor_init(&acceptor, ctx);
     return acceptor;
 }
 

@@ -21,13 +21,10 @@ typedef struct io_Acceptor {
 
 DEFINE_DESCRIPTOR_WRAPPERS(io_Acceptor, io_Descriptor)
 
-IO_INLINE(io_Acceptor)
-io_Acceptor_make(io_Context* context)
+IO_INLINE(void)
+io_Acceptor_init(io_Acceptor* acceptor, io_Context* ctx)
 {
-    io_Acceptor acceptor = {
-        .base = io_Descriptor_make(context),
-    };
-    return acceptor;
+    io_Descriptor_init(&acceptor->base, ctx);
 }
 
 IO_INLINE(void)
