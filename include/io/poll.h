@@ -25,8 +25,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <unistd.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 /* forward declarations begin */
 
@@ -195,7 +195,7 @@ io_PollHandle_cancel(void* self)
 {
     io_PollHandle* handle = self;
     for (int i = IO_OP_MAX; --i;) {
-        io_Op* op = IO_MOVE_PTR(handle->ops[i-1]);
+        io_Op* op = IO_MOVE_PTR(handle->ops[i - 1]);
         if (op) {
             io_Op_abort(op, io_SystemErr_make(IO_ECANCELED));
             io_Loop_decrease_task_count(handle->poll->loop);
@@ -253,7 +253,8 @@ io_Poll_create_handle(void* self, int fd)
 {
     io_Poll* poll = self;
     io_PollHandle* handle = io_Allocator_alloc(&poll->handle_allocator.base, sizeof(io_PollHandle));
-    IO_REQUIRE(handle, "Out of memory");
+    if (!handle)
+        return NULL;
     io_PollHandle_init(handle, poll, fd);
     io_PollHandleMap_set(&poll->handles, handle->fd, handle);
     return &handle->base;
@@ -338,7 +339,8 @@ IO_INLINE(io_Reactor*)
 io_Poll_create(io_Loop* loop)
 {
     io_Poll* service = io_alloc(sizeof(io_Poll));
-    IO_REQUIRE(service, "Out of memory");
+    if (!service)
+        return NULL;
     service->base.run = io_Poll_run;
     service->base.destroy = io_Poll_destroy;
     service->base.create_handle = io_Poll_create_handle;

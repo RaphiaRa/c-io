@@ -97,7 +97,8 @@ IO_INLINE(io_ReadOp*)
 io_ReadOp_create(io_Descriptor* socket, void* addr, size_t size, io_ReadCallback callback, void* user_data)
 {
     io_ReadOp* op = io_Allocator_alloc(io_Descriptor_get_context(socket)->allocator, sizeof(io_ReadOp));
-    IO_REQUIRE(op, "Out of memory");
+    if (!op)
+        return NULL;
     io_Op_init(&op->base, IO_OP_READ, io_ReadOp_fn, io_ReadOp_abort);
     op->socket = socket;
     op->addr = addr;

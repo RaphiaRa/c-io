@@ -27,23 +27,10 @@ typedef struct io_UnixAcceptor {
 DEFINE_DESCRIPTOR_WRAPPERS(io_UnixAcceptor, io_Acceptor)
 DEFINE_ACCEPT_WRAPPERS(io_UnixAcceptor, io_UnixSocket)
 
-IO_INLINE(void)
-io_UnixAcceptor_init(io_UnixAcceptor* acceptor, io_Context* ctx)
+IO_INLINE(io_Err)
+io_UnixAcceptor_init(io_UnixAcceptor* acceptor, io_Context* ctx, const char* path)
 {
     io_Acceptor_init(&acceptor->base, ctx);
-}
-
-IO_INLINE(io_UnixAcceptor)
-io_UnixAcceptor_make(io_Context* ctx)
-{
-    io_UnixAcceptor acceptor = {0};
-    io_UnixAcceptor_init(&acceptor, ctx);
-    return acceptor;
-}
-
-IO_INLINE(io_Err)
-io_UnixAcceptor_bind(io_UnixAcceptor* acceptor, const char* path)
-{
     int fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd == -1) {
         return io_SystemErr_make(errno);

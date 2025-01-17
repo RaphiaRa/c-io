@@ -39,16 +39,24 @@ io_Socket_write(io_Socket* socket, const void* addr, size_t* size)
     return io_perform_write(&socket->base, addr, size);
 }
 
-IO_INLINE(void)
+IO_INLINE(io_Err)
 io_Socket_async_read(io_Socket* socket, void* addr, size_t size, io_ReadCallback callback, void* user_data)
 {
-    io_Handle_submit(socket->base.handle, &io_ReadOp_create(&socket->base, addr, size, callback, user_data)->base);
+    io_ReadOp* op = io_ReadOp_create(&socket->base, addr, size, callback, user_data);
+    if (!op)
+        return io_SystemErr_make(IO_ENOMEM);
+    io_Handle_submit(socket->base.handle, &op->base);
+    return IO_ERR_OK;
 }
 
-IO_INLINE(void)
+IO_INLINE(io_Err)
 io_Socket_async_write(io_Socket* socket, const void* addr, size_t size, io_WriteCallback callback, void* user_data)
 {
-    io_Handle_submit(socket->base.handle, &io_WriteOp_create(&socket->base, addr, size, callback, user_data)->base);
+    io_WriteOp* op = io_WriteOp_create(&socket->base, addr, size, callback, user_data);
+    if (!op)
+        return io_SystemErr_make(IO_ENOMEM);
+    io_Handle_submit(socket->base.handle, &op->base);
+    return IO_ERR_OK;
 }
 
 IO_INLINE(void)
@@ -64,10 +72,10 @@ io_Socket_deinit(io_Socket* socket)
         return B##_read(&socket->base, addr, size);                                                       \
     }                                                                                                     \
                                                                                                           \
-    IO_INLINE(void)                                                                                       \
+    IO_INLINE(io_Err)                                                                                     \
     P##_async_read(P* socket, void* addr, size_t size, io_ReadCallback callback, void* user_data)         \
     {                                                                                                     \
-        B##_async_read(&socket->base, addr, size, callback, user_data);                                   \
+        return B##_async_read(&socket->base, addr, size, callback, user_data);                            \
     }                                                                                                     \
                                                                                                           \
     IO_INLINE(io_Err)                                                                                     \
@@ -76,10 +84,10 @@ io_Socket_deinit(io_Socket* socket)
         return B##_write(&socket->base, addr, size);                                                      \
     }                                                                                                     \
                                                                                                           \
-    IO_INLINE(void)                                                                                       \
+    IO_INLINE(io_Err)                                                                                     \
     P##_async_write(P* socket, const void* addr, size_t size, io_WriteCallback callback, void* user_data) \
     {                                                                                                     \
-        B##_async_write(&socket->base, addr, size, callback, user_data);                                  \
+        return B##_async_write(&socket->base, addr, size, callback, user_data);                           \
     }
 
 #endif

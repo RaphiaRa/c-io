@@ -92,14 +92,16 @@ io_AcceptOp_abort(void* self, io_Err err)
 IO_INLINE(io_AcceptOp*)
 io_AcceptOp_create(io_Descriptor* acceptor, io_Descriptor* socket, io_AcceptCallback callback, void* user_data)
 {
-    io_AcceptOp* task = io_Allocator_alloc(io_Descriptor_get_context(acceptor)->allocator, sizeof(io_AcceptOp));
-    IO_REQUIRE(task, "Out of memory");
-    io_Op_init(&task->base, IO_OP_READ, io_AcceptOp_fn, io_AcceptOp_abort);
-    task->acceptor = acceptor;
-    task->socket = socket;
-    task->callback = callback;
-    task->user_data = user_data;
-    return task;
+    io_AcceptOp* op = io_Allocator_alloc(io_Descriptor_get_context(acceptor)->allocator, sizeof(io_AcceptOp));
+    if (!op) {
+        return NULL;
+    }
+    io_Op_init(&op->base, IO_OP_READ, io_AcceptOp_fn, io_AcceptOp_abort);
+    op->acceptor = acceptor;
+    op->socket = socket;
+    op->callback = callback;
+    op->user_data = user_data;
+    return op;
 }
 
 #endif

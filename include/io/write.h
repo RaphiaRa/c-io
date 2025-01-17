@@ -97,7 +97,8 @@ IO_INLINE(io_WriteOp*)
 io_WriteOp_create(io_Descriptor* socket, const void* addr, size_t size, io_WriteCallback callback, void* user_data)
 {
     io_WriteOp* op = io_Allocator_alloc(io_Descriptor_get_context(socket)->allocator, sizeof(io_WriteOp));
-    IO_REQUIRE(op, "Out of memory");
+    if (!op)
+        return NULL;
     io_Op_init(&op->base, IO_OP_WRITE, io_WriteOp_fn, io_WriteOp_abort);
     op->socket = socket;
     op->addr = addr;
