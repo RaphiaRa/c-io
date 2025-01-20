@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 c-io Contributers
+#
+# SPDX-License-Identifier: MPL-2.0
+
 # Simple script to amalgamate C header files into a single file.
 # Don't use this in other projects, it's just a simple script specific to this project.
 
