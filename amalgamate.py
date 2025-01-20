@@ -198,7 +198,7 @@ def amalgamate(output_file):
         amalgamated_content += content + "\n"
         amalgamated_content += f"/* End of {header} */\n"
     amalgamated_content += "#endif\n"
-    amalgamated_content = license_header + "\n" + amalgamated_content
+    amalgamated_content = license_header + "\n\n" + amalgamated_content
     # Write the final amalgamated content to the output file
     write_file(output_file, amalgamated_content)
     print(f"Amalgamated file created at {output_file}")
