@@ -7,9 +7,6 @@
 #ifndef IO_H
 #define IO_H
 
-#include <stdbool.h>
-#include <stddef.h>
-
 #include <io/allocator.h>
 #include <io/config.h>
 #include <io/context.h>
