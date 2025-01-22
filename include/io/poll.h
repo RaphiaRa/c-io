@@ -495,9 +495,10 @@ IO_INLINE(void)
 io_Poll_destroy(void* self)
 {
     io_Poll* service = self;
-    io_PollFds_deinit(&service->fds);
     io_PollHandleMap_deinit(&service->handles);
     io_PollHandlePool_deinit(&service->handle_allocator);
+    io_PollFds_deinit(&service->fds);
+    io_PollTimer_deinit(&service->timer);
     io_free(self);
 }
 
@@ -512,9 +513,10 @@ io_Poll_create(io_Loop* loop)
     service->base.create_handle = io_Poll_create_handle;
     service->loop = loop;
     service->needs_interrupt = false;
-    io_PollFds_init(&service->fds, io_DefaultAllocator());
     io_PollHandleMap_init(&service->handles, io_DefaultAllocator());
     io_PollHandlePool_init(&service->handle_allocator, io_DefaultAllocator(), 16, 8 * 1024);
+    io_PollFds_init(&service->fds, io_DefaultAllocator());
+    io_PollTimer_init(&service->timer);
     return &service->base;
 }
 
