@@ -12,11 +12,14 @@
 #include <io/config.h>
 #include <io/err.h>
 #include <io/task.h>
+#include <io/timer.h>
+
+#define IO_TIMEOUT_INFINITE ((io_Duration)(-1))
 
 typedef struct io_HandleMethods {
     void (*cancel)(void* self);
-    void (*submit)(void* self, io_Op* op);
-    void (*enable_timeout)(void* self, bool enabled);
+    io_Err (*submit)(void* self, io_Op* op);
+    void (*set_timeout)(void* self, io_OpType type, io_Duration duration);
     int (*get_fd)(const void* self);
     void (*destroy)(void* self);
 } io_HandleMethods;
@@ -31,10 +34,10 @@ io_Handle_cancel(io_Handle* io_handle)
     io_handle->methods->cancel(io_handle);
 }
 
-IO_INLINE(void)
+IO_INLINE(io_Err)
 io_Handle_submit(io_Handle* io_handle, io_Op* iot)
 {
-    io_handle->methods->submit(io_handle, iot);
+    return io_handle->methods->submit(io_handle, iot);
 }
 
 IO_INLINE(int)
@@ -44,9 +47,9 @@ io_Handle_get_fd(const io_Handle* io_handle)
 }
 
 IO_INLINE(void)
-io_Handle_enable_timeout(io_Handle* io_handle, bool enabled)
+io_Handle_set_timeout(io_Handle* io_handle, io_OpType type, io_Duration duration)
 {
-    io_handle->methods->enable_timeout(io_handle, enabled);
+    io_handle->methods->set_timeout(io_handle, type, duration);
 }
 
 IO_INLINE(void)
@@ -56,21 +59,28 @@ io_Handle_destroy(io_Handle* io_handle)
 }
 
 typedef struct io_Reactor {
-    void (*run)(void* self, int timeout_ms);
+    io_Err (*run)(void* self, io_Duration timeout);
     io_Handle* (*create_handle)(void* self, int fd);
+    void (*interrupt)(void* self);
     void (*destroy)(void* self);
 } io_Reactor;
 
-IO_INLINE(void)
+IO_INLINE(io_Err)
 io_Reactor_run(io_Reactor* io_service, int timeout_ms)
 {
-    io_service->run(io_service, timeout_ms);
+    return io_service->run(io_service, timeout_ms);
 }
 
 IO_INLINE(io_Handle*)
 io_Reactor_create_handle(io_Reactor* io_service, int fd)
 {
     return io_service->create_handle(io_service, fd);
+}
+
+IO_INLINE(void)
+io_Reactor_interrupt(io_Reactor* io_service)
+{
+    io_service->interrupt(io_service);
 }
 
 IO_INLINE(void)

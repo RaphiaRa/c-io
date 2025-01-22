@@ -11,6 +11,7 @@
 #include <io/assert.h>
 #include <io/config.h>
 #include <io/hash.h>
+#include <io/system_err.h>
 
 #include <stddef.h>
 #include <string.h>
@@ -36,13 +37,13 @@
     IO_INLINE(void)                                                                                                                 \
     NAME##_reset(NAME* map) IO_MAYBE_UNUSED;                                                                                        \
                                                                                                                                     \
-    IO_INLINE(void)                                                                                                                 \
+    IO_INLINE(io_Err)                                                                                                               \
     NAME##_reserve(NAME* map, size_t capacity) IO_MAYBE_UNUSED;                                                                     \
                                                                                                                                     \
     IO_INLINE(void)                                                                                                                 \
     NAME##_deinit(NAME* map) IO_MAYBE_UNUSED;                                                                                       \
                                                                                                                                     \
-    IO_INLINE(void)                                                                                                                 \
+    IO_INLINE(io_Err)                                                                                                               \
     NAME##_set(NAME* map, K key, V value) IO_MAYBE_UNUSED;                                                                          \
                                                                                                                                     \
     IO_INLINE(V*)                                                                                                                   \
@@ -106,20 +107,23 @@
         map->end = 0;                                                                                                               \
     }                                                                                                                               \
                                                                                                                                     \
-    IO_INLINE(void)                                                                                                                 \
+    IO_INLINE(io_Err)                                                                                                               \
     NAME##_reserve(NAME* map, size_t capacity)                                                                                      \
     {                                                                                                                               \
         if (map->capacity >= capacity) {                                                                                            \
-            return;                                                                                                                 \
+            return IO_ERR_OK;                                                                                                       \
         }                                                                                                                           \
         capacity = io_next_pow2(capacity);                                                                                          \
         NAME##_entry* entries = (NAME##_entry*)io_Allocator_realloc(map->allocator, map->entries, capacity * sizeof(NAME##_entry)); \
-        IO_REQUIRE(entries, "Out of memory");                                                                                       \
+        if (!entries) {                                                                                                             \
+            return io_SystemErr(IO_ENOMEM);                                                                                         \
+        }                                                                                                                           \
         for (size_t i = map->capacity; i < capacity; i++) {                                                                         \
             entries[i] = (NAME##_entry){.key = K_NULL};                                                                             \
         }                                                                                                                           \
         map->entries = entries;                                                                                                     \
         map->capacity = capacity;                                                                                                   \
+        return IO_ERR_OK;                                                                                                           \
     }                                                                                                                               \
                                                                                                                                     \
     IO_INLINE(void)                                                                                                                 \
@@ -201,7 +205,7 @@
         }                                                                                                                           \
     }                                                                                                                               \
                                                                                                                                     \
-    IO_INLINE(void)                                                                                                                 \
+    IO_INLINE(io_Err)                                                                                                               \
     NAME##_expand(NAME* map)                                                                                                        \
     {                                                                                                                               \
         size_t old_capacity = map->capacity;                                                                                        \
@@ -209,7 +213,10 @@
         if (new_capacity == 0) {                                                                                                    \
             new_capacity = 1;                                                                                                       \
         }                                                                                                                           \
-        NAME##_reserve(map, new_capacity);                                                                                          \
+        io_Err err = NAME##_reserve(map, new_capacity);                                                                             \
+        if (err != IO_ERR_OK) {                                                                                                     \
+            return err;                                                                                                             \
+        }                                                                                                                           \
         /* Need to rehash all entries */                                                                                            \
         for (size_t i = 0; i < old_capacity; i++) {                                                                                 \
             NAME##_entry* entry = &map->entries[i];                                                                                 \
@@ -226,16 +233,21 @@
             NAME##_fix_hole(map, entry);                                                                                            \
             NAME##_do_set(map, hash, e.key, e.value);                                                                               \
         }                                                                                                                           \
+        return IO_ERR_OK;                                                                                                           \
     }                                                                                                                               \
                                                                                                                                     \
-    IO_INLINE(void)                                                                                                                 \
+    IO_INLINE(io_Err)                                                                                                               \
     NAME##_set(NAME* map, K key, V value)                                                                                           \
     {                                                                                                                               \
         if (map->size >= map->capacity / 2) {                                                                                       \
-            NAME##_expand(map);                                                                                                     \
+            io_Err err = NAME##_expand(map);                                                                                        \
+            if (err != IO_ERR_OK) {                                                                                                 \
+                return err;                                                                                                         \
+            }                                                                                                                       \
         }                                                                                                                           \
         uint32_t hash = HASH(key) & (map->capacity - 1);                                                                            \
         NAME##_do_set(map, hash, key, value);                                                                                       \
+        return IO_ERR_OK;                                                                                                           \
     }                                                                                                                               \
                                                                                                                                     \
     IO_INLINE(NAME##_entry*)                                                                                                        \

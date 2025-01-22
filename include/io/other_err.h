@@ -7,7 +7,9 @@
 #ifndef IO_OTHER_ERR_H
 #define IO_OTHER_ERR_H
 
-#include <io/err.h>
+#include <io/basic_err.h>
+#include <io/config.h>
+#include <io/utility.h>
 
 #include <errno.h>
 #include <string.h>
@@ -17,11 +19,8 @@ typedef enum io_OtherErrc {
     IO_OTHER_ERRC_UNKNOWN = 2,
 } io_OtherErrc;
 
-IO_INLINE(io_ErrCategory*)
-io_OtherErrCategory(void);
-
 IO_INLINE(const char*)
-io_OtherErr_msg(int code)
+io_OtherErr_msg(uint32_t code)
 {
     switch (code) {
     case 0:
@@ -34,22 +33,15 @@ io_OtherErr_msg(int code)
     }
 }
 
+#define IO_OTHER_CATEGORY IO_FOURCC('O', 'T', 'H', 'R')
+
 IO_INLINE(io_Err)
-io_OtherErr_make(int code)
+io_OtherErr(uint32_t code)
 {
-    return (io_Err){.code = code, .category = io_OtherErrCategory()};
+    return IO_ERR_PACk(IO_OTHER_CATEGORY, code);
 }
 
-IO_INLINE(io_ErrCategory*)
-io_OtherErrCategory(void)
-{
-    static io_ErrCategory category = {
-        .name = "other",
-        .msg = io_OtherErr_msg,
-    };
-    return &category;
-}
+#define IO_ERR_EOF (io_OtherErr(IO_OTHER_ERRC_EOF))
+#define IO_ERR_UNKNOWN (io_OtherErr(IO_OTHER_ERRC_UNKNOWN))
 
-#define IO_ERR_EOF ((io_Err){IO_OTHER_ERRC_EOF, io_OtherErrCategory()})
-#define IO_ERR_UNKNOWN ((io_Err){IO_OTHER_ERRC_UNKNOWN, io_OtherErrCategory()})
 #endif

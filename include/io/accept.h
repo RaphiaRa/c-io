@@ -36,7 +36,7 @@ io_perform_accept(const io_Descriptor* acceptor, io_Descriptor* socket)
     int accept_fd = io_Descriptor_get_fd(acceptor);
     int ret = accept(accept_fd, NULL, NULL);
     if (ret == -1) {
-        return io_SystemErr_make(errno);
+        return io_SystemErr(errno);
     }
     io_Descriptor_set_fd(socket, ret);
     return IO_ERR_OK;
@@ -62,10 +62,10 @@ IO_INLINE(void)
 io_AcceptOp_perform(io_AcceptOp* op)
 {
     io_Err err = io_perform_accept(op->acceptor, op->socket);
-    if (!io_ok(err)
+    if (err
         && (io_Op_flags(&op->base) & IO_OP_TRYIO)
-        && err.category == io_SystemErrCategory()
-        && (err.code == IO_EAGAIN || err.code == IO_EAGAIN)) {
+        && (err == io_SystemErr(IO_EAGAIN)
+            || err == io_SystemErr(IO_EWOULDBLOCK))) {
         return;
     }
     io_AcceptOp_complete(op, err);

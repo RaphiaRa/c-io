@@ -28,7 +28,7 @@ Connection_destroy(Connection* connection)
 static void
 Connection_handle_write(void* self, size_t size, io_Err err)
 {
-    if (!io_ok(err)) {
+    if (err) {
         printf("Failed to read bytes");
     } else {
         printf("Wrote %d of bytes\n", (int)size);
@@ -42,8 +42,8 @@ static void
 Connection_start(Connection* connection)
 {
     io_Err err = IO_ERR_OK;
-    if (!io_ok(err = io_UnixSocket_async_write(&connection->socket, MSG, sizeof(MSG),
-                                               Connection_handle_write, connection))) {
+    if ((err = io_UnixSocket_async_write(&connection->socket, MSG, sizeof(MSG),
+                                        Connection_handle_write, connection))) {
         printf("Failed to initiate write: %s, abort\n", io_Err_msg(err));
         Connection_destroy(connection);
     }
@@ -69,7 +69,7 @@ static void
 Server_handle_accept(void* self, io_Err err)
 {
     Server* server = self;
-    if (!io_ok(err)) {
+    if (err) {
         printf("Failed to accept connection: %s\n", io_Err_msg(err));
         return;
     }
@@ -83,8 +83,8 @@ Server_accept(Server* server)
 {
     server->accepting = Connection_create(server->context);
     io_Err err = IO_ERR_OK;
-    if (!io_ok(err = io_UnixAcceptor_async_accept(&server->acceptor, &server->accepting->socket,
-                                                  Server_handle_accept, server))) {
+    if ((err = io_UnixAcceptor_async_accept(&server->acceptor, &server->accepting->socket,
+                                           Server_handle_accept, server))) {
         printf("Failed to initiate accept: %s, abort\n", io_Err_msg(err));
         Connection_destroy(server->accepting);
     }
@@ -96,7 +96,7 @@ Server_init(Server* server, io_Context* ctx, const char* path)
     server->context = ctx;
     unlink(path);
     io_Err err = IO_ERR_OK;
-    if (!io_ok(err = io_UnixAcceptor_init(&server->acceptor, server->context, path))) {
+    if ((err = io_UnixAcceptor_init(&server->acceptor, server->context, path))) {
         return err;
     }
     Server_accept(server);
@@ -107,12 +107,12 @@ int main(void)
 {
     io_Err err = IO_ERR_OK;
     io_Context context;
-    if (!io_ok(err = io_Context_init(&context))) {
+    if ((err = io_Context_init(&context))) {
         printf("Failed to init context: %s\n", io_Err_msg(err));
         return -1;
     }
     Server server;
-    if (!io_ok(err = Server_init(&server, &context, "/tmp/test"))) {
+    if ((err = Server_init(&server, &context, "/tmp/test"))) {
         printf("Failed to init server: %s\n", io_Err_msg(err));
         goto cleanup_context;
     }
@@ -120,5 +120,5 @@ int main(void)
     Server_deinit(&server);
 cleanup_context:
     io_Context_deinit(&context);
-    return (io_ok(err)) ? 0 : -1;
+    return err ? 0 : -1;
 }

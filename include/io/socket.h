@@ -44,7 +44,7 @@ io_Socket_async_read(io_Socket* socket, void* addr, size_t size, io_ReadCallback
 {
     io_ReadOp* op = io_ReadOp_create(&socket->base, addr, size, callback, user_data);
     if (!op)
-        return io_SystemErr_make(IO_ENOMEM);
+        return io_SystemErr(IO_ENOMEM);
     io_Handle_submit(socket->base.handle, &op->base);
     return IO_ERR_OK;
 }
@@ -54,7 +54,7 @@ io_Socket_async_write(io_Socket* socket, const void* addr, size_t size, io_Write
 {
     io_WriteOp* op = io_WriteOp_create(&socket->base, addr, size, callback, user_data);
     if (!op)
-        return io_SystemErr_make(IO_ENOMEM);
+        return io_SystemErr(IO_ENOMEM);
     io_Handle_submit(socket->base.handle, &op->base);
     return IO_ERR_OK;
 }

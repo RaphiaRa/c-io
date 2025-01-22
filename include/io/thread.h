@@ -10,7 +10,7 @@
 #include <io/config.h>
 #include <io/err.h>
 
-#if IO_THREAD_SAFE
+#if IO_WITH_THREADS
 
 #include <io/assert.h>
 
@@ -25,7 +25,7 @@ IO_INLINE(io_Err)
 io_Mutex_init(io_Mutex* mtx)
 {
     if (pthread_mutex_init(&mtx->mtx, NULL) != 0) {
-        return io_Err_make(errno, NULL);
+        return io_SystemErr(errno);
     }
     return IO_ERR_OK;
 }
@@ -54,6 +54,7 @@ io_Mutex_unlock(io_Mutex* mtx)
 #else
 
 typedef struct io_Mutex {
+    int dummy;
 } io_Mutex;
 
 IO_INLINE(io_Err)

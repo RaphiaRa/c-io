@@ -33,23 +33,23 @@ io_UnixAcceptor_init(io_UnixAcceptor* acceptor, io_Context* ctx, const char* pat
     io_Acceptor_init(&acceptor->base, ctx);
     int fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd == -1) {
-        return io_SystemErr_make(errno);
+        return io_SystemErr(errno);
     }
     io_Err err = IO_ERR_OK;
     // Set the socket to non-blocking mode
     if (fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK) < 0) {
-        err = io_SystemErr_make(errno);
+        err = io_SystemErr(errno);
         goto cleanup_socket;
     }
     struct sockaddr_un addr = {0};
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
     if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-        err = io_SystemErr_make(errno);
+        err = io_SystemErr(errno);
         goto cleanup_socket;
     }
     if (listen(fd, SOMAXCONN) == -1) {
-        err = io_SystemErr_make(errno);
+        err = io_SystemErr(errno);
         goto cleanup_socket;
     }
     io_Acceptor_set_fd(&acceptor->base, fd);

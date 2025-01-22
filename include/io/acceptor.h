@@ -32,7 +32,7 @@ io_Acceptor_async_accept(io_Acceptor* acceptor, io_Socket* socket, io_AcceptCall
 {
     io_AcceptOp* op = io_AcceptOp_create(&acceptor->base, &socket->base, callback, user_data);
     if (!op) {
-        return io_SystemErr_make(IO_ENOMEM);
+        return io_SystemErr(IO_ENOMEM);
     }
     io_Handle_submit(acceptor->base.handle, &op->base);
     return IO_ERR_OK;

@@ -37,7 +37,7 @@ io_perform_read(io_Descriptor* socket, void* addr, size_t* size)
     int read_fd = io_Descriptor_get_fd(socket);
     ssize_t ret = read(read_fd, addr, *size);
     if (ret == -1) {
-        return io_SystemErr_make(errno);
+        return io_SystemErr(errno);
     }
     *size = (size_t)ret;
     io_Descriptor_set_fd(socket, ret);
@@ -66,10 +66,10 @@ io_ReadOp_perform(io_ReadOp* op)
 {
     size_t size = op->size;
     io_Err err = io_perform_read(op->socket, op->addr, &size);
-    if (!io_ok(err)
+    if (err
         && (io_Op_flags(&op->base) & IO_OP_TRYIO)
-        && err.category == io_SystemErrCategory()
-        && (err.code == IO_EAGAIN || err.code == IO_EAGAIN)) {
+        && (err == io_SystemErr(IO_EAGAIN)
+            || err == io_SystemErr(IO_EWOULDBLOCK))) {
         return;
     }
     io_ReadOp_complete(op, size, err);

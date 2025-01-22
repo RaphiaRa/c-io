@@ -10,6 +10,7 @@
 #include <io/allocator.h>
 #include <io/assert.h>
 #include <io/config.h>
+#include <io/system_err.h>
 #include <io/utility.h>
 
 #include <stddef.h>
@@ -37,11 +38,14 @@
     IO_INLINE(size_t)                                                                                      \
     NAME##_capacity(const NAME* vec) IO_MAYBE_UNUSED;                                                      \
                                                                                                            \
-    IO_INLINE(void)                                                                                        \
+    IO_INLINE(io_Err)                                                                                      \
     NAME##_resize(NAME* vec, size_t size) IO_MAYBE_UNUSED;                                                 \
                                                                                                            \
-    IO_INLINE(void)                                                                                        \
+    IO_INLINE(io_Err)                                                                                      \
     NAME##_push_back(NAME* vec, TYPE value) IO_MAYBE_UNUSED;                                               \
+                                                                                                           \
+    IO_INLINE(void)                                                                                        \
+    NAME##_pop_back(NAME* vec) IO_MAYBE_UNUSED;                                                            \
                                                                                                            \
     IO_INLINE(TYPE*)                                                                                       \
     NAME##_at(NAME* vec, size_t index) IO_MAYBE_UNUSED;                                                    \
@@ -55,7 +59,7 @@
     IO_INLINE(TYPE*)                                                                                       \
     NAME##_end(NAME* vec) IO_MAYBE_UNUSED;                                                                 \
                                                                                                            \
-    IO_INLINE(TYPE)                                                                                       \
+    IO_INLINE(TYPE)                                                                                        \
     NAME##_back(NAME* vec) IO_MAYBE_UNUSED;                                                                \
                                                                                                            \
     IO_INLINE(void)                                                                                        \
@@ -101,34 +105,48 @@
         return vec->capacity;                                                                              \
     }                                                                                                      \
                                                                                                            \
-    IO_INLINE(void)                                                                                        \
+    IO_INLINE(io_Err)                                                                                      \
     NAME##_resize(NAME* vec, size_t size)                                                                  \
     {                                                                                                      \
         if (size < vec->size) {                                                                            \
             vec->size = size;                                                                              \
-            return;                                                                                        \
+            return IO_ERR_OK;                                                                              \
         }                                                                                                  \
         if (size > vec->capacity) {                                                                        \
             size_t new_capacity = io_next_pow2(size);                                                      \
             TYPE* new_data = io_Allocator_realloc(vec->allocator, vec->data, new_capacity * sizeof(TYPE)); \
-            IO_ASSERT(new_data, "Out of memory");                                                          \
+            if (!new_data) {                                                                               \
+                return io_SystemErr(IO_ENOMEM);                                                            \
+            }                                                                                              \
             vec->data = new_data;                                                                          \
             vec->capacity = new_capacity;                                                                  \
         }                                                                                                  \
         vec->size = size;                                                                                  \
+        return IO_ERR_OK;                                                                                  \
     }                                                                                                      \
                                                                                                            \
-    IO_INLINE(void)                                                                                        \
+    IO_INLINE(io_Err)                                                                                      \
     NAME##_push_back(NAME* vec, TYPE value)                                                                \
     {                                                                                                      \
         if (vec->size >= vec->capacity) {                                                                  \
             size_t new_capacity = vec->capacity == 0 ? 1 : vec->capacity * 2;                              \
             TYPE* new_data = io_Allocator_realloc(vec->allocator, vec->data, new_capacity * sizeof(TYPE)); \
-            IO_ASSERT(new_data, "Out of memory");                                                          \
+            if (!new_data) {                                                                               \
+                return io_SystemErr(IO_ENOMEM);                                                            \
+            }                                                                                              \
             vec->data = new_data;                                                                          \
             vec->capacity = new_capacity;                                                                  \
         }                                                                                                  \
         vec->data[vec->size++] = value;                                                                    \
+        return IO_ERR_OK;                                                                                  \
+    }                                                                                                      \
+                                                                                                           \
+    IO_INLINE(void)                                                                                        \
+    NAME##_pop_back(NAME* vec)                                                                             \
+    {                                                                                                      \
+        if (vec->size > 0) {                                                                               \
+            DEINIT(&vec->data[--vec->size]);                                                               \
+        }                                                                                                  \
     }                                                                                                      \
                                                                                                            \
     IO_INLINE(TYPE*)                                                                                       \
@@ -142,7 +160,7 @@
     NAME##_cat(const NAME* vec, size_t index)                                                              \
     {                                                                                                      \
         IO_ASSERT(index <= vec->size, "index exceeds vector size");                                        \
-        return (const TYPE*)&vec->data[index];                                                                          \
+        return (const TYPE*)&vec->data[index];                                                             \
     }                                                                                                      \
                                                                                                            \
     IO_INLINE(TYPE*)                                                                                       \

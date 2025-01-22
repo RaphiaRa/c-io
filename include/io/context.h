@@ -26,12 +26,12 @@ io_Context_init(io_Context* context)
     context->allocator = io_DefaultAllocator();
     io_Loop* loop = io_Loop_create();
     if (loop == NULL) {
-        return io_SystemErr_make(IO_ENOMEM);
+        return io_SystemErr(IO_ENOMEM);
     }
     io_Reactor* reactor = io_Poll_create(loop);
     if (reactor == NULL) {
         io_Reactor_destroy(reactor);
-        return io_SystemErr_make(IO_ENOMEM);
+        return io_SystemErr(IO_ENOMEM);
     }
     io_Loop_set_reactor(loop, reactor);
     context->loop = loop;
