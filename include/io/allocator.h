@@ -91,7 +91,11 @@ io_UserAllocator(void)
 IO_INLINE(void)
 io_set_allocator(io_Allocator* allocator)
 {
-    *io_UserAllocator_ptr() = allocator;
+    if (allocator == NULL) {
+        *io_UserAllocator_ptr() = io_SystemAllocator();
+    } else {
+        *io_UserAllocator_ptr() = allocator;
+    }
 }
 
 IO_INLINE(io_Allocator*)
