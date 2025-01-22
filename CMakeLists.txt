@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 project(c-io)
 
 set(CMAKE_C_STANDARD 99)
@@ -100,6 +100,7 @@ endif()
 # Amalgamation
 
 if (NOT IO_DISABLE_AMALGAMATION)
+    set(Python3_FIND_VIRTUALENV FIRST)
     find_package(Python3)
     if (Python3_FOUND)
         message(STATUS "Found Python3: ${Python3_EXECUTABLE}")
@@ -127,17 +128,16 @@ endif()
 
 
 if (NOT IO_DISABLE_AMALGAMATION)
-    # run amalgamation.py with IO_CORE_SRC and IO_3RD_PARTY_SRC
    function(amalgamation_generate OUTPUT_FILE)
-        # Amalgamation of io.c
+        # Amalgamation of io.h
         add_custom_command(
             OUTPUT ${OUTPUT_FILE}
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/amalgamate.py -i ${CMAKE_CURRENT_SOURCE_DIR}/include -o ${OUTPUT_FILE}
-            DEPENDS io
             COMMENT "Running amalgamation.py on ${OUTPUT_FILE}"
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             VERBATIM
         )
     endfunction(amalgamation_generate OUTPUT_FILE)
     amalgamation_generate(${CMAKE_CURRENT_BINARY_DIR}/io.h)
+    add_custom_target(amalgamation ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/io.h)
 endif()
