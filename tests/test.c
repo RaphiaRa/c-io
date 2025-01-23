@@ -1,5 +1,8 @@
 #include "test.h"
+#include "syscall_stubs.h"
+
 #include <io/allocator.h>
+#include <io/system_call.h>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -102,4 +105,33 @@ void io_test_teardown(void)
     }
     allocator->list = NULL;
     io_set_allocator(NULL);
+}
+
+io_MockSystemCall io_mock_system_call = {
+    .read = read_stub_success,
+    .write = write_stub_success,
+    .close = close_stub_success,
+    .socket = socket_stub_success,
+    .bind = bind_stub_success,
+    .listen = listen_stub_success,
+    .accept = accept_stub_success,
+    .connect = connect_stub_success,
+    .pipe = pipe_stub_success,
+    .fcntl = fcntl_stub_success,
+    .poll = poll_stub_success,
+};
+
+void reset_system_call_stubs(void)
+{
+    io_mock_system_call.read = read_stub_success;
+    io_mock_system_call.write = write_stub_success;
+    io_mock_system_call.close = close_stub_success;
+    io_mock_system_call.socket = socket_stub_success;
+    io_mock_system_call.bind = bind_stub_success;
+    io_mock_system_call.listen = listen_stub_success;
+    io_mock_system_call.accept = accept_stub_success;
+    io_mock_system_call.connect = connect_stub_success;
+    io_mock_system_call.pipe = pipe_stub_success;
+    io_mock_system_call.fcntl = fcntl_stub_success;
+    io_mock_system_call.poll = poll_stub_success;
 }

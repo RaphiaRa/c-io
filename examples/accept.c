@@ -20,7 +20,7 @@ int main(void)
         goto cleanup_context;
     }
     io_UnixSocket accepting;
-    if ((err = io_UnixSocket_init(&accepting, &context))) {
+    if ((err = io_UnixSocket_init(&accepting, &context, NULL))) {
         printf("Failed to init accepting: %s\n", io_Err_msg(err));
         goto cleanup_acceptor;
     }

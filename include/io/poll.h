@@ -20,6 +20,7 @@
 #include <io/task.h>
 #include <io/timer.h>
 #include <io/vec.h>
+#include <io/system_call.h>
 
 #include <poll.h>
 #include <stdbool.h>
@@ -276,7 +277,7 @@ struct io_Poll {
     io_PollHandleMap handles;
     io_PollFds fds;
     io_PollTimer timer;
-    bool needs_interrupt;
+    int interrupt_fds[2];
 };
 
 /* th_poll_handle implementation begin */
@@ -383,7 +384,7 @@ io_PollHandle_init(io_PollHandle* handle, io_Poll* poll, int fd)
         .get_fd = io_PollHandle_get_fd,
     };
     handle->base.methods = &methods;
-    for (size_t idx = IO_OP_MAX - 1; --idx;) {
+    for (size_t idx = IO_OP_MAX - 1; idx--;) {
         handle->ops[idx] = NULL;
     }
     handle->poll = poll;
@@ -426,15 +427,22 @@ io_Poll_run(void* self, io_Duration timeout)
     }
     io_PollFdVec* fds = io_PollFds_get(&service->fds);
     nfds_t nfds = io_PollFdVec_size(fds);
-    int ret = poll(io_PollFdVec_begin(fds), nfds, timeout_ms);
+    int ret = io_poll(io_PollFdVec_begin(fds), nfds, timeout_ms);
     if (ret <= 0) {
         return IO_ERR_OK;
     }
 
-    size_t reenqueue = 0;
-    for (size_t i = 0; i < nfds; ++i) {
-        short revents = io_PollFdVec_at(fds, i)->revents;
-        short events = io_PollFdVec_at(fds, i)->events & (POLLIN | POLLOUT);
+    if (io_PollFdVec_begin(fds)->revents & POLLIN) {
+        IO_ASSERT(io_PollFdVec_begin(fds)->fd == service->interrupt_fds[0], "Invalid interrupt fd");
+        char c[512];
+        (void)read(service->interrupt_fds[0], &c, sizeof(c));
+    }
+
+    size_t reenqueue = 1;
+    for (size_t i = 1; i < nfds; ++i) {
+        struct pollfd* pfd = io_PollFdVec_at(fds, i);
+        short revents = pfd->revents;
+        short events = pfd->events & (POLLIN | POLLOUT);
         int op_index = 0;
         switch (events) {
         case POLLIN:
@@ -447,7 +455,7 @@ io_Poll_run(void* self, io_Duration timeout)
             continue;
             break;
         }
-        io_PollHandle* handle = io_PollHandleMap_try_get(&service->handles, io_PollFdVec_at(fds, i)->fd);
+        io_PollHandle* handle = io_PollHandleMap_try_get(&service->handles, pfd->fd);
         if (!handle) // handle was removed
             continue;
         io_PollHandle_lock(handle);
@@ -462,7 +470,7 @@ io_Poll_run(void* self, io_Duration timeout)
             } else if (revents & POLLNVAL) {
                 io_Op_abort(op, io_SystemErr(IO_EBADF));
             } else {
-                io_Op_abort(op, IO_ERR_UNKNOWN);    
+                io_Op_abort(op, IO_ERR_UNKNOWN);
             }
             io_Loop_decrease_task_count(service->loop);
             handle->ops[op_index] = NULL;
@@ -474,7 +482,7 @@ io_Poll_run(void* self, io_Duration timeout)
                 handle->ops[op_index] = NULL;
             } else {
                 if (reenqueue < i) {
-                    *io_PollFdVec_at(fds, reenqueue) = *io_PollFdVec_at(fds, i);
+                    *io_PollFdVec_at(fds, reenqueue) = *pfd;
                 }
                 ++reenqueue;
             }
@@ -488,7 +496,9 @@ io_Poll_run(void* self, io_Duration timeout)
 IO_INLINE(void)
 io_Poll_interrupt(void* self)
 {
-    (void)self;
+    io_Poll* service = self;
+    char c = 0;
+    (void)io_write(service->interrupt_fds[1], &c, 1);
 }
 
 IO_INLINE(void)
@@ -499,25 +509,44 @@ io_Poll_destroy(void* self)
     io_PollHandlePool_deinit(&service->handle_allocator);
     io_PollFds_deinit(&service->fds);
     io_PollTimer_deinit(&service->timer);
+    io_close(service->interrupt_fds[0]);
+    io_close(service->interrupt_fds[1]);
     io_free(self);
 }
 
-IO_INLINE(io_Reactor*)
-io_Poll_create(io_Loop* loop)
+IO_INLINE(io_Err)
+io_Poll_create(io_Reactor** out, io_Loop* loop)
 {
     io_Poll* service = io_alloc(sizeof(io_Poll));
-    if (!service)
-        return NULL;
+    if (!service) {
+        return io_SystemErr(IO_ENOMEM);
+    }
     service->base.run = io_Poll_run;
     service->base.destroy = io_Poll_destroy;
     service->base.create_handle = io_Poll_create_handle;
+    service->base.interrupt = io_Poll_interrupt;
     service->loop = loop;
-    service->needs_interrupt = false;
+    io_Err err = IO_ERR_OK;
+    if (io_pipe(service->interrupt_fds) == -1) {
+        err = io_SystemErr(errno);
+        goto on_pipe_err;
+    }
+    io_PollFds_init(&service->fds, io_DefaultAllocator());
+    struct pollfd pfd = {.fd = service->interrupt_fds[0], .events = POLLIN};
+    if ((err = io_PollFds_add_fd(&service->fds, pfd))) {
+        goto on_PollFds_err;
+    }
     io_PollHandleMap_init(&service->handles, io_DefaultAllocator());
     io_PollHandlePool_init(&service->handle_allocator, io_DefaultAllocator(), 16, 8 * 1024);
-    io_PollFds_init(&service->fds, io_DefaultAllocator());
     io_PollTimer_init(&service->timer);
-    return &service->base;
+    *out = &service->base;
+    return IO_ERR_OK;
+on_PollFds_err:
+    io_close(service->interrupt_fds[0]);
+    io_close(service->interrupt_fds[1]);
+on_pipe_err:
+    io_free(service);
+    return err;
 }
 
 #endif

@@ -12,6 +12,7 @@
 #include <io/assert.h>
 #include <io/context.h>
 #include <io/descriptor.h>
+#include <io/system_call.h>
 #include <io/system_err.h>
 #include <io/task.h>
 
@@ -35,7 +36,7 @@ IO_INLINE(io_Err)
 io_perform_write(io_Descriptor* socket, const void* addr, size_t* size)
 {
     int write_fd = io_Descriptor_get_fd(socket);
-    ssize_t ret = write(write_fd, addr, *size);
+    ssize_t ret = io_write(write_fd, addr, *size);
     if (ret == -1) {
         return io_SystemErr(errno);
     }

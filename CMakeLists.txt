@@ -68,6 +68,7 @@ if (NOT IO_DISABLE_TESTS)
 
     set(IO_TESTS
         tests/context.c
+        tests/unix_acceptor.c
     )
 
     create_test_sourcelist(IO_TEST_SRC_LIST io_test.c
@@ -77,6 +78,7 @@ if (NOT IO_DISABLE_TESTS)
 
     add_executable(io_test 
         tests/test.c 
+        tests/syscall_stubs.c
         ${IO_TEST_SRC_LIST}
     )
 
@@ -90,6 +92,9 @@ if (NOT IO_DISABLE_TESTS)
     else()
         message(WARNING "Address sanitizer not found, tests will not be run with ASAN")
     endif()
+
+    # Enable mocking for testing
+    target_compile_definitions(io_test PRIVATE IO_MOCKING=1)
 
     foreach (test_src ${IO_TESTS})
         get_filename_component(test_name ${test_src} NAME_WE)

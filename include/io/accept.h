@@ -12,6 +12,7 @@
 #include <io/assert.h>
 #include <io/context.h>
 #include <io/descriptor.h>
+#include <io/system_call.h>
 #include <io/system_err.h>
 #include <io/task.h>
 
@@ -34,7 +35,7 @@ IO_INLINE(io_Err)
 io_perform_accept(const io_Descriptor* acceptor, io_Descriptor* socket)
 {
     int accept_fd = io_Descriptor_get_fd(acceptor);
-    int ret = accept(accept_fd, NULL, NULL);
+    int ret = io_accept(accept_fd, NULL, NULL);
     if (ret == -1) {
         return io_SystemErr(errno);
     }

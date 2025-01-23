@@ -14,7 +14,7 @@ static Connection*
 Connection_create(io_Context* context)
 {
     Connection* connection = malloc(sizeof(Connection));
-    io_UnixSocket_init(&connection->socket, context);
+    io_UnixSocket_init(&connection->socket, context, NULL);
     return connection;
 }
 
