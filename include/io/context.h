@@ -28,10 +28,11 @@ io_Context_init(io_Context* context)
     if (loop == NULL) {
         return io_SystemErr(IO_ENOMEM);
     }
-    io_Reactor* reactor = io_Poll_create(loop);
-    if (reactor == NULL) {
-        io_Reactor_destroy(reactor);
-        return io_SystemErr(IO_ENOMEM);
+    io_Reactor* reactor = NULL;
+    io_Err err = io_Poll_create(&reactor, loop);
+    if (err) {
+        io_Loop_destroy(loop);
+        return err;
     }
     io_Loop_set_reactor(loop, reactor);
     context->loop = loop;
