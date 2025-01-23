@@ -198,9 +198,10 @@ def amalgamate(output_file):
         content = remove_license_header(content)
         content = cleanup_includes(content)
         content = remove_header_guards(content)
-        amalgamated_content += f"/* Start of {header} */\n"
+        source_path = os.path.relpath(header, include_dir)
+        amalgamated_content += f"/* Start of {source_path} */\n"
         amalgamated_content += content + "\n"
-        amalgamated_content += f"/* End of {header} */\n"
+        amalgamated_content += f"/* End of {source_path} */\n"
     amalgamated_content += "#endif\n"
     amalgamated_content = license_header + "\n\n" + amalgamated_content
     # Write the final amalgamated content to the output file
