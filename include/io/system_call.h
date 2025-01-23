@@ -81,6 +81,7 @@ io_poll(struct pollfd* fds, nfds_t nfds, int timeout)
 #endif // IO_WITH_POLL
 #else  // IO_MOCKING
 
+#include <fcntl.h>
 #include <poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
