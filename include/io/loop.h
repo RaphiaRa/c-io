@@ -23,6 +23,7 @@ typedef struct io_Loop {
     io_Reactor* reactor;
     io_Task reactor_task;
     io_Mutex mutex;
+    bool needs_interrupt;
 } io_Loop;
 
 IO_INLINE(io_Loop*)
@@ -34,6 +35,7 @@ io_Loop_create(void)
     loop->num_tasks = 0;
     loop->queue = (io_TaskQueue){0};
     loop->reactor = NULL;
+    loop->needs_interrupt = false;
     (void)io_Mutex_init(&loop->mutex);
     io_TaskQueue_push(&loop->queue, &loop->reactor_task);
     return loop;
@@ -73,6 +75,10 @@ io_Loop_push_task(io_Loop* loop, io_Task* task)
     io_Loop_increase_task_count(loop);
     io_Mutex_lock(&loop->mutex);
     io_TaskQueue_push(&loop->queue, task);
+    if (loop->needs_interrupt) {
+        loop->needs_interrupt = false;
+        io_Reactor_interrupt(loop->reactor);
+    }
     io_Mutex_unlock(&loop->mutex);
 }
 
@@ -86,6 +92,7 @@ io_Loop_run(io_Loop* loop)
             io_Task* task = io_TaskQueue_pop(&loop->queue);
             IO_ASSERT(task, "Task queue must never be empty");
             bool empty = io_TaskQueue_empty(&loop->queue);
+            loop->needs_interrupt = empty;
             io_Mutex_unlock(&loop->mutex);
             if (task == &loop->reactor_task) {
                 io_Reactor_run(loop->reactor, empty ? -1 : 0);
