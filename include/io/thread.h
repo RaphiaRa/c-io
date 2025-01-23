@@ -34,6 +34,7 @@ IO_INLINE(void)
 io_Mutex_deinit(io_Mutex* mtx)
 {
     int err = pthread_mutex_destroy(&mtx->mtx);
+    (void)err;
     IO_ASSERT(err == 0, "Failed to destroy mutex");
 }
 
@@ -41,6 +42,7 @@ IO_INLINE(void)
 io_Mutex_lock(io_Mutex* mtx)
 {
     int err = pthread_mutex_lock(&mtx->mtx);
+    (void)err;
     IO_ASSERT(err == 0, "Failed to lock mutex");
 }
 
@@ -48,6 +50,7 @@ IO_INLINE(void)
 io_Mutex_unlock(io_Mutex* mtx)
 {
     int err = pthread_mutex_unlock(&mtx->mtx);
+    (void)err;
     IO_ASSERT(err == 0, "Failed to unlock mutex");
 }
 
