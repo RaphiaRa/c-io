@@ -34,14 +34,15 @@ io_OtherErr_msg(uint32_t code)
 }
 
 #define IO_OTHER_CATEGORY IO_FOURCC('O', 'T', 'H', 'R')
+#define IO_OTHER_ERR(code) IO_ERR_PACk(IO_OTHER_CATEGORY, code)
 
 IO_INLINE(io_Err)
 io_OtherErr(uint32_t code)
 {
-    return IO_ERR_PACk(IO_OTHER_CATEGORY, code);
+    return IO_OTHER_ERR(code);
 }
 
-#define IO_ERR_EOF (io_OtherErr(IO_OTHER_ERRC_EOF))
-#define IO_ERR_UNKNOWN (io_OtherErr(IO_OTHER_ERRC_UNKNOWN))
+#define IO_ERR_EOF (IO_OTHER_ERR(IO_OTHER_ERRC_EOF))
+#define IO_ERR_UNKNOWN (IO_OTHER_ERR(IO_OTHER_ERRC_UNKNOWN))
 
 #endif
