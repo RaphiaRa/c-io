@@ -40,7 +40,21 @@ io_perform_accept(const io_Descriptor* acceptor, io_Descriptor* socket)
         return io_SystemErr(errno);
     }
     io_Descriptor_set_fd(socket, ret);
+    // if the accept socket was non block, we gonna set
+    // the new socket to non block as well
+    bool non_blocking = false;
+    io_Err err = io_Descriptor_get_non_blocking(acceptor, &non_blocking);
+    if (err)
+        goto on_error;
+    if (non_blocking) {
+        err = io_Descriptor_set_non_blocking(socket, true);
+        if (err)
+            goto on_error;
+    }
     return IO_ERR_OK;
+on_error:
+    io_Descriptor_close(socket);
+    return err;
 }
 
 IO_INLINE(void)
