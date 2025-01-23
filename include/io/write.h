@@ -41,7 +41,6 @@ io_perform_write(io_Descriptor* socket, const void* addr, size_t* size)
         return io_SystemErr(errno);
     }
     *size = (size_t)ret;
-    io_Descriptor_set_fd(socket, ret);
     return IO_ERR_OK;
 }
 
