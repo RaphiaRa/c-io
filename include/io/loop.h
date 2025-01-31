@@ -95,7 +95,7 @@ io_Loop_run(io_Loop* loop)
             loop->needs_interrupt = empty;
             io_Mutex_unlock(&loop->mutex);
             if (task == &loop->reactor_task) {
-                io_Reactor_run(loop->reactor, empty ? -1 : 0);
+                io_Reactor_run(loop->reactor, io_Seconds(empty ? -1 : 0));
                 io_TaskQueue_push(&loop->queue, &loop->reactor_task);
             } else {
                 task->fn(task);

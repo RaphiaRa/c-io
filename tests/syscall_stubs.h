@@ -52,7 +52,7 @@ write_stub_success(int fd, const void* buf, size_t count)
     (void)fd;
     (void)buf;
     (void)count;
-    return count;
+    return (ssize_t)count;
 }
 
 static inline ssize_t
@@ -101,7 +101,7 @@ poll_stub_success(struct pollfd* fds, nfds_t nfds, int timeout)
     for (nfds_t i = 0; i < nfds; ++i) {
         fds[i].revents = fds[i].events;
     }
-    return nfds;
+    return (int)nfds;
 }
 
 static inline int

@@ -7,6 +7,7 @@
 #ifndef IO_SYSTEM_ERR_H
 #define IO_SYSTEM_ERR_H
 
+#include <io/assert.h>
 #include <io/basic_err.h>
 #include <io/config.h>
 #include <io/utility.h>
@@ -46,15 +47,16 @@
 IO_INLINE(const char*)
 io_SystemErr_msg(uint32_t code)
 {
-    return strerror(code);
+    return strerror((int)code);
 }
 
 #define IO_SYSTEM_CATEGORY IO_FOURCC('S', 'Y', 'S', 'T')
 
 IO_INLINE(io_Err)
-io_SystemErr(uint32_t code)
+io_SystemErr(int code)
 {
-    return IO_ERR_PACk(IO_SYSTEM_CATEGORY, code);
+    IO_ASSERT(code > 0, "Invalid system error code");
+    return IO_ERR_PACk(IO_SYSTEM_CATEGORY, (uint32_t)code);
 }
 
 #endif

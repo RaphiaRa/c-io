@@ -36,6 +36,7 @@ int io_TestAllocator_outstanding(void);
 void reset_system_call_stubs(void);
 
 #define IO_TEST_BEGIN(name)                 \
+    int tests_##name(int, char**);          \
     int tests_##name(int argc, char** argv) \
     {                                       \
         (void)argc;                         \

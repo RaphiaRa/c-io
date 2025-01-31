@@ -37,7 +37,7 @@ io_socket(int domain, int type, int protocol)
 }
 
 IO_INLINE(int)
-io_bind(int sockfd, const struct sockaddr* addr, size_t addrlen)
+io_bind(int sockfd, const struct sockaddr* addr, socklen_t addrlen)
 {
     return bind(sockfd, addr, addrlen);
 }
@@ -55,7 +55,7 @@ io_accept(int sockfd, struct sockaddr* addr, socklen_t* addrlen)
 }
 
 IO_INLINE(int)
-io_connect(int sockfd, const void* addr, size_t addrlen)
+io_connect(int sockfd, const void* addr, socklen_t addrlen)
 {
     return connect(sockfd, addr, addrlen);
 }
@@ -129,7 +129,7 @@ io_socket(int domain, int type, int protocol)
 }
 
 IO_INLINE(int)
-io_bind(int sockfd, const struct sockaddr* addr, size_t addrlen)
+io_bind(int sockfd, const struct sockaddr* addr, socklen_t addrlen)
 {
     return io_mock_system_call.bind(sockfd, addr, addrlen);
 }
@@ -147,7 +147,7 @@ io_accept(int sockfd, struct sockaddr* addr, socklen_t* addrlen)
 }
 
 IO_INLINE(int)
-io_connect(int sockfd, const struct sockaddr* addr, size_t addrlen)
+io_connect(int sockfd, const struct sockaddr* addr, socklen_t addrlen)
 {
     return io_mock_system_call.connect(sockfd, addr, addrlen);
 }

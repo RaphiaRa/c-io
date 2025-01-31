@@ -2,7 +2,8 @@
 
 #include <io/unix_acceptor.h>
 
-void accept_callback(void* user, io_Err err)
+static void
+accept_callback(void* user, io_Err err)
 {
     *((io_Err*)user) = err;
 }

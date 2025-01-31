@@ -17,10 +17,10 @@
 #include <io/other_err.h>
 #include <io/queue.h>
 #include <io/reactor.h>
+#include <io/system_call.h>
 #include <io/task.h>
 #include <io/timer.h>
 #include <io/vec.h>
-#include <io/system_call.h>
 
 #include <poll.h>
 #include <stdbool.h>
@@ -426,7 +426,7 @@ io_Poll_run(void* self, io_Duration timeout)
         return err;
     }
     io_PollFdVec* fds = io_PollFds_get(&service->fds);
-    nfds_t nfds = io_PollFdVec_size(fds);
+    nfds_t nfds = (nfds_t)io_PollFdVec_size(fds);
     int ret = io_poll(io_PollFdVec_begin(fds), nfds, timeout_ms);
     if (ret <= 0) {
         return IO_ERR_OK;
@@ -481,6 +481,9 @@ io_Poll_run(void* self, io_Duration timeout)
                 io_Loop_decrease_task_count(service->loop);
                 handle->ops[op_index] = NULL;
             } else {
+                if (handle->timeout[op_index] != IO_TIMEOUT_INFINITE) {
+                    io_PollTimer_update(&service->timer, handle->timeout[op_index]);
+                }
                 if (reenqueue < i) {
                     *io_PollFdVec_at(fds, reenqueue) = *pfd;
                 }
