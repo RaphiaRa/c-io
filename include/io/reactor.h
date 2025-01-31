@@ -66,9 +66,9 @@ typedef struct io_Reactor {
 } io_Reactor;
 
 IO_INLINE(io_Err)
-io_Reactor_run(io_Reactor* io_service, int timeout_ms)
+io_Reactor_run(io_Reactor* io_service, io_Duration timeout)
 {
-    return io_service->run(io_service, timeout_ms);
+    return io_service->run(io_service, timeout);
 }
 
 IO_INLINE(io_Handle*)

@@ -7,7 +7,7 @@ check_ipo_supported()
 
 # Extra warnings, treat warnings as error
 if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
-   SET(IO_COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror)
+   SET(IO_COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Werror -Wstrict-prototypes -Wmissing-prototypes -Wshadow -Wconversion)
    message(STATUS "Using Clang/GNU compiler, use options: ${IO_COMPILE_OPTIONS}")
 endif()
 function (io_set_default_compile_options target)

@@ -184,9 +184,9 @@
     IO_INLINE(void)                                                                                                                 \
     NAME##_fix_hole(NAME* map, NAME##_entry* entry)                                                                                 \
     {                                                                                                                               \
-        size_t last_zeroed = entry - map->entries;                                                                                  \
-        for (size_t i = entry - map->entries + 1; i < map->end; i++) {                                                              \
-            uint32_t hash = 0;                                                                                                      \
+        size_t last_zeroed = (size_t)(entry - map->entries);                                                                        \
+        for (size_t i = (size_t)(entry - map->entries + 1); i < map->end; i++) {                                                    \
+            size_t hash = 0;                                                                                                        \
             if (K_EQ(map->entries[i].key, K_NULL)) {                                                                                \
                 break;                                                                                                              \
             } else if ((hash = (HASH(map->entries[i].key) & (map->capacity - 1))) <= last_zeroed) {                                 \
@@ -199,9 +199,9 @@
             map->begin = 0;                                                                                                         \
             map->end = 0;                                                                                                           \
         } else if (last_zeroed == map->end - 1) {                                                                                   \
-            map->end = NAME##_prev(map, &map->entries[last_zeroed]) - map->entries + 1;                                             \
+            map->end = (size_t)(NAME##_prev(map, &map->entries[last_zeroed]) - map->entries + 1);                                   \
         } else if (last_zeroed == map->begin) {                                                                                     \
-            map->begin = NAME##_next(map, &map->entries[last_zeroed]) - map->entries;                                               \
+            map->begin = (size_t)(NAME##_next(map, &map->entries[last_zeroed]) - map->entries);                                     \
         }                                                                                                                           \
     }                                                                                                                               \
                                                                                                                                     \
@@ -307,7 +307,7 @@
     IO_INLINE(NAME##_entry*)                                                                                                        \
     NAME##_next(NAME* map, NAME##_entry* entry)                                                                                     \
     {                                                                                                                               \
-        size_t i = entry - map->entries;                                                                                            \
+        size_t i = (size_t)(entry - map->entries);                                                                                  \
         for (size_t j = i + 1; j < map->end; j++) {                                                                                 \
             NAME##_entry* e = &map->entries[j];                                                                                     \
             if (!K_EQ(e->key, K_NULL)) {                                                                                            \
@@ -320,7 +320,7 @@
     IO_INLINE(NAME##_entry*)                                                                                                        \
     NAME##_prev(NAME* map, NAME##_entry* entry)                                                                                     \
     {                                                                                                                               \
-        size_t i = entry - map->entries;                                                                                            \
+        size_t i = (size_t)(entry - map->entries);                                                                                  \
         for (size_t j = i - 1; j >= map->begin; j--) {                                                                              \
             NAME##_entry* e = &map->entries[j];                                                                                     \
             if (!K_EQ(e->key, K_NULL)) {                                                                                            \
