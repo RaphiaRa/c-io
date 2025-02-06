@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#define NDEBUG 1
+
 #ifndef NDEBUG
 #define IO_ASSERT(cond, msg)                                                      \
     do {                                                                          \
