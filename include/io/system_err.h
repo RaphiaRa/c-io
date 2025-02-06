@@ -56,7 +56,7 @@ IO_INLINE(io_Err)
 io_SystemErr(int code)
 {
     IO_ASSERT(code > 0, "Invalid system error code");
-    return IO_ERR_PACk(IO_SYSTEM_CATEGORY, (uint32_t)code);
+    return IO_ERR_PACK(IO_SYSTEM_CATEGORY, (uint32_t)code);
 }
 
 #endif

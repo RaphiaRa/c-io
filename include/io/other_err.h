@@ -34,7 +34,7 @@ io_OtherErr_msg(uint32_t code)
 }
 
 #define IO_OTHER_CATEGORY IO_FOURCC('O', 'T', 'H', 'R')
-#define IO_OTHER_ERR(code) IO_ERR_PACk(IO_OTHER_CATEGORY, code)
+#define IO_OTHER_ERR(code) IO_ERR_PACK(IO_OTHER_CATEGORY, code)
 
 IO_INLINE(io_Err)
 io_OtherErr(uint32_t code)
