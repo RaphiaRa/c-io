@@ -41,7 +41,12 @@ io_next_pow2(size_t n)
     n |= n >> 2;
     n |= n >> 4;
     n |= n >> 8;
+#if SIZE_MAX >= UINT32_MAX
     n |= n >> 16;
+#endif
+#if SIZE_MAX >= UINT64_MAX
+    n |= n >> 32;
+#endif
     n++;
     return n;
 }
