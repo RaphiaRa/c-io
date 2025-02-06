@@ -226,7 +226,7 @@
             }                                                                                                                       \
             uint32_t hash = HASH(entry->key);                                                                                       \
             /* Don't need to rehash every entry */                                                                                  \
-            hash &= (new_capacity - 1);                                                                                             \
+            hash &= (uint32_t)(new_capacity - 1);                                                                                   \
             NAME##_entry e = *entry;                                                                                                \
             entry->key = K_NULL;                                                                                                    \
             --map->size;                                                                                                            \
@@ -245,7 +245,7 @@
                 return err;                                                                                                         \
             }                                                                                                                       \
         }                                                                                                                           \
-        uint32_t hash = HASH(key) & (map->capacity - 1);                                                                            \
+        uint32_t hash = (uint32_t)(HASH(key) & (map->capacity - 1));                                                                \
         NAME##_do_set(map, hash, key, value);                                                                                       \
         return IO_ERR_OK;                                                                                                           \
     }                                                                                                                               \
@@ -253,7 +253,7 @@
     IO_INLINE(NAME##_entry*)                                                                                                        \
     NAME##_find(const NAME* map, K key)                                                                                             \
     {                                                                                                                               \
-        uint32_t hash = HASH(key) & (map->capacity - 1);                                                                            \
+        uint32_t hash = (uint32_t)(HASH(key) & (map->capacity - 1));                                                                \
         if (map->size == 0) {                                                                                                       \
             return NULL;                                                                                                            \
         }                                                                                                                           \
