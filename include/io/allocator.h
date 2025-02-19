@@ -75,54 +75,22 @@ io_SystemAllocator(void)
     return &allocator;
 }
 
-IO_INLINE(io_Allocator**)
-io_UserAllocator_ptr(void)
+IO_INLINE(void*)
+io_alloc(io_Allocator* allocator, size_t size)
 {
-    static io_Allocator* allocator = NULL;
-    return &allocator;
-}
-
-IO_INLINE(io_Allocator*)
-io_UserAllocator(void)
-{
-    return *io_UserAllocator_ptr();
-}
-
-IO_INLINE(void)
-io_set_allocator(io_Allocator* allocator)
-{
-    if (allocator == NULL) {
-        *io_UserAllocator_ptr() = io_SystemAllocator();
-    } else {
-        *io_UserAllocator_ptr() = allocator;
-    }
-}
-
-IO_INLINE(io_Allocator*)
-io_DefaultAllocator(void)
-{
-    if (io_UserAllocator() != NULL) {
-        return io_UserAllocator();
-    }
-    return io_SystemAllocator();
+    return io_Allocator_alloc(allocator, size);
 }
 
 IO_INLINE(void*)
-io_alloc(size_t size)
+io_realloc(io_Allocator* allocator, void* addr, size_t size)
 {
-    return io_Allocator_alloc(io_DefaultAllocator(), size);
-}
-
-IO_INLINE(void*)
-io_realloc(void* addr, size_t size)
-{
-    return io_Allocator_realloc(io_DefaultAllocator(), addr, size);
+    return io_Allocator_realloc(allocator, addr, size);
 }
 
 IO_INLINE(void)
-io_free(void* addr)
+io_free(io_Allocator* allocator, void* addr)
 {
-    io_Allocator_free(io_DefaultAllocator(), addr);
+    io_Allocator_free(allocator, addr);
 }
 
 #endif

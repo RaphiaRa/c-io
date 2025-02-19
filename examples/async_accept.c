@@ -96,7 +96,8 @@ Server_init(Server* server, io_Context* ctx, const char* path)
     server->context = ctx;
     unlink(path);
     io_Err err = IO_ERR_OK;
-    if ((err = io_UnixAcceptor_init(&server->acceptor, server->context, path))) {
+    if ((err = io_UnixAcceptor_init(&server->acceptor, server->context, path)) != IO_ERR_OK
+    && (err = io_UnixAcceptor_set_non_blocking(&server->acceptor, true)) != IO_ERR_OK) {
         return err;
     }
     Server_accept(server);
@@ -107,7 +108,7 @@ int main(void)
 {
     io_Err err = IO_ERR_OK;
     io_Context context;
-    if ((err = io_Context_init(&context))) {
+    if ((err = io_Context_init(&context, NULL))) {
         printf("Failed to init context: %s\n", io_Err_msg(err));
         return -1;
     }

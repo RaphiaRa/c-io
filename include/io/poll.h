@@ -272,6 +272,7 @@ io_PollFds_get(io_PollFds* fds)
 
 struct io_Poll {
     io_Reactor base;
+    io_Allocator* allocator;
     io_Loop* loop;
     io_PollHandlePool handle_allocator;
     io_PollHandleMap handles;
@@ -514,13 +515,13 @@ io_Poll_destroy(void* self)
     io_PollTimer_deinit(&service->timer);
     io_close(service->interrupt_fds[0]);
     io_close(service->interrupt_fds[1]);
-    io_free(self);
+    io_free(service->allocator, self);
 }
 
 IO_INLINE(io_Err)
-io_Poll_create(io_Reactor** out, io_Loop* loop)
+io_Poll_create(io_Reactor** out, io_Loop* loop, io_Allocator* allocator)
 {
-    io_Poll* service = io_alloc(sizeof(io_Poll));
+    io_Poll* service = io_alloc(allocator, sizeof(io_Poll));
     if (!service) {
         return io_SystemErr(IO_ENOMEM);
     }
@@ -528,19 +529,20 @@ io_Poll_create(io_Reactor** out, io_Loop* loop)
     service->base.destroy = io_Poll_destroy;
     service->base.create_handle = io_Poll_create_handle;
     service->base.interrupt = io_Poll_interrupt;
+    service->allocator = allocator;
     service->loop = loop;
     io_Err err = IO_ERR_OK;
     if (io_pipe(service->interrupt_fds) == -1) {
         err = io_SystemErr(errno);
         goto on_pipe_err;
     }
-    io_PollFds_init(&service->fds, io_DefaultAllocator());
+    io_PollFds_init(&service->fds, allocator);
     struct pollfd pfd = {.fd = service->interrupt_fds[0], .events = POLLIN};
     if ((err = io_PollFds_add_fd(&service->fds, pfd))) {
         goto on_PollFds_err;
     }
-    io_PollHandleMap_init(&service->handles, io_DefaultAllocator());
-    io_PollHandlePool_init(&service->handle_allocator, io_DefaultAllocator(), 16, 8 * 1024);
+    io_PollHandleMap_init(&service->handles, allocator);
+    io_PollHandlePool_init(&service->handle_allocator, allocator, 16, 8 * 1024);
     io_PollTimer_init(&service->timer);
     *out = &service->base;
     return IO_ERR_OK;
@@ -548,7 +550,7 @@ on_PollFds_err:
     io_close(service->interrupt_fds[0]);
     io_close(service->interrupt_fds[1]);
 on_pipe_err:
-    io_free(service);
+    io_free(allocator, service);
     return err;
 }
 

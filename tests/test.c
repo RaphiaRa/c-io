@@ -73,14 +73,14 @@ io_TestAllocator_free(void* self, void* ptr)
 
 int io_TestAllocator_outstanding(void)
 {
-    io_TestAllocator* allocator = (io_TestAllocator*)io_DefaultAllocator();
+    io_TestAllocator* allocator = (io_TestAllocator*)test_allocator();
     int count = 0;
     for (io_AllocList* node = allocator->list; node != NULL; node = node->next)
         ++count;
     return count;
 }
 
-void io_test_setup(void)
+io_Allocator* test_allocator(void)
 {
     static io_AllocatorMethods methods = {
         .alloc = io_TestAllocator_alloc,
@@ -91,20 +91,15 @@ void io_test_setup(void)
         .base.methods = &methods,
         .list = NULL,
     };
-    io_set_allocator(&allocator.base);
+    return &allocator.base;
+}
+
+void io_test_setup(void)
+{
 }
 
 void io_test_teardown(void)
 {
-    io_TestAllocator* allocator = (io_TestAllocator*)io_DefaultAllocator();
-    for (io_AllocList* node = allocator->list; node != NULL;) {
-        io_AllocList* next = node->next;
-        free(node->ptr);
-        free(node);
-        node = next;
-    }
-    allocator->list = NULL;
-    io_set_allocator(NULL);
 }
 
 io_MockSystemCall io_mock_system_call = {

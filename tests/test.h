@@ -3,6 +3,7 @@
 
 #include "syscall_stubs.h"
 
+#include <io/allocator.h>
 #include <io/system_call.h>
 #include <stdio.h>
 
@@ -26,6 +27,8 @@ typedef enum {
 void io_test_setup(void);
 
 void io_test_teardown(void);
+
+io_Allocator* test_allocator(void);
 
 /** io_TestAllocator_outstanding
  * @brief Check if there are outstanding allocations.

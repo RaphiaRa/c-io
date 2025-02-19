@@ -18,27 +18,34 @@
 IO_DEFINE_QUEUE(io_TaskQueue, io_Task)
 
 typedef struct io_Loop {
-    size_t num_tasks;
     io_TaskQueue queue;
-    io_Reactor* reactor;
     io_Task reactor_task;
     io_Mutex mutex;
+    io_Reactor* reactor;
+    io_Allocator* allocator;
+    size_t num_tasks;
     bool needs_interrupt;
 } io_Loop;
 
-IO_INLINE(io_Loop*)
-io_Loop_create(void)
+IO_INLINE(io_Err)
+io_Loop_create(io_Loop** out, io_Allocator* allocator)
 {
-    io_Loop* loop = io_alloc(sizeof(io_Loop));
+    io_Loop* loop = io_alloc(allocator, sizeof(io_Loop));
     if (!loop)
-        return NULL;
+        return io_SystemErr(IO_ENOMEM);
     loop->num_tasks = 0;
     loop->queue = (io_TaskQueue){0};
     loop->reactor = NULL;
+    loop->allocator = allocator;
     loop->needs_interrupt = false;
-    (void)io_Mutex_init(&loop->mutex);
+    io_Err err = IO_ERR_OK;
+    if ((err = io_Mutex_init(&loop->mutex))) {
+        io_free(allocator, loop);
+        return err;
+    }
     io_TaskQueue_push(&loop->queue, &loop->reactor_task);
-    return loop;
+    *out = loop;
+    return err;
 }
 
 /** io_Loop_set_reactor
@@ -112,7 +119,7 @@ io_Loop_destroy(io_Loop* loop)
     io_Mutex_deinit(&loop->mutex);
     if (loop->reactor)
         io_Reactor_destroy(loop->reactor);
-    io_free(loop);
+    io_free(loop->allocator, loop);
 }
 
 #endif

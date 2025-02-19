@@ -13,7 +13,7 @@ IO_TEST_BEGIN(unix_acceptor)
     IO_TEST_CASE_BEGIN(unix_acceptor_init)
     {
         io_Context ctx;
-        io_Context_init(&ctx);
+        io_Context_init(&ctx, test_allocator());
         io_UnixAcceptor acceptor;
         IO_CHECK(io_UnixAcceptor_init(&acceptor, &ctx, "/test") == IO_ERR_OK);
         io_UnixAcceptor_deinit(&acceptor);
@@ -23,7 +23,7 @@ IO_TEST_BEGIN(unix_acceptor)
     IO_TEST_CASE_BEGIN(unix_acceptor_init_socket_fail)
     {
         io_Context ctx;
-        io_Context_init(&ctx);
+        io_Context_init(&ctx, test_allocator());
         io_mock_system_call.socket = socket_stub_emfile;
         io_UnixAcceptor acceptor;
         IO_CHECK(io_UnixAcceptor_init(&acceptor, &ctx, "/test") == io_SystemErr(IO_EMFILE));
@@ -34,7 +34,7 @@ IO_TEST_BEGIN(unix_acceptor)
     IO_TEST_CASE_BEGIN(unix_acceptor_init_bind_fail)
     {
         io_Context ctx;
-        io_Context_init(&ctx);
+        io_Context_init(&ctx, test_allocator());
         io_mock_system_call.bind = bind_stub_eaddrinuse;
         io_UnixAcceptor acceptor;
         IO_CHECK(io_UnixAcceptor_init(&acceptor, &ctx, "/test") == io_SystemErr(IO_EADDRINUSE));
@@ -45,7 +45,7 @@ IO_TEST_BEGIN(unix_acceptor)
     IO_TEST_CASE_BEGIN(unix_acceptor_init_fcntl_fail)
     {
         io_Context ctx;
-        io_Context_init(&ctx);
+        io_Context_init(&ctx, test_allocator());
         io_mock_system_call.fcntl = fcntl_stub_einval;
         io_UnixAcceptor acceptor;
         IO_CHECK(io_UnixAcceptor_init(&acceptor, &ctx, "/test") == io_SystemErr(IO_EINVAL));
@@ -56,7 +56,7 @@ IO_TEST_BEGIN(unix_acceptor)
     IO_TEST_CASE_BEGIN(unix_acceptor_accept)
     {
         io_Context ctx;
-        io_Context_init(&ctx);
+        io_Context_init(&ctx, test_allocator());
         io_UnixAcceptor acceptor;
         IO_CHECK(io_UnixAcceptor_init(&acceptor, &ctx, "/test") == IO_ERR_OK);
         io_UnixSocket socket;
@@ -70,7 +70,7 @@ IO_TEST_BEGIN(unix_acceptor)
     IO_TEST_CASE_BEGIN(unix_acceptor_async_accept)
     {
         io_Context ctx;
-        io_Context_init(&ctx);
+        io_Context_init(&ctx, test_allocator());
         io_UnixAcceptor acceptor;
         IO_CHECK(io_UnixAcceptor_init(&acceptor, &ctx, "/test") == IO_ERR_OK);
         io_UnixSocket socket;

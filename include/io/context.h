@@ -21,16 +21,16 @@ typedef struct io_Context {
 } io_Context;
 
 IO_INLINE(io_Err)
-io_Context_init(io_Context* context)
+io_Context_init(io_Context* context, io_Allocator* allocator)
 {
-    context->allocator = io_DefaultAllocator();
-    io_Loop* loop = io_Loop_create();
-    if (loop == NULL) {
-        return io_SystemErr(IO_ENOMEM);
+    context->allocator = allocator ? allocator : io_SystemAllocator();
+    io_Loop* loop;
+    io_Err err = IO_ERR_OK;
+    if ((err = io_Loop_create(&loop, context->allocator))) {
+        return err;
     }
     io_Reactor* reactor = NULL;
-    io_Err err = io_Poll_create(&reactor, loop);
-    if (err) {
+    if ((err = io_Poll_create(&reactor, loop, context->allocator))) {
         io_Loop_destroy(loop);
         return err;
     }

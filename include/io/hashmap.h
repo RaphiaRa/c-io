@@ -70,9 +70,6 @@
     NAME##_init(NAME* map, io_Allocator* allocator)                                                                                 \
     {                                                                                                                               \
         map->allocator = allocator;                                                                                                 \
-        if (map->allocator == NULL) {                                                                                               \
-            map->allocator = io_DefaultAllocator();                                                                                 \
-        }                                                                                                                           \
         map->entries = NULL;                                                                                                        \
         map->size = 0;                                                                                                              \
         map->capacity = 0;                                                                                                          \

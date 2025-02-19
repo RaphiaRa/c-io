@@ -65,7 +65,7 @@
     IO_INLINE(void)                                                                                        \
     NAME##_init(NAME* vec, io_Allocator* allocator)                                                        \
     {                                                                                                      \
-        vec->allocator = allocator ? allocator : io_DefaultAllocator();                                    \
+        vec->allocator = allocator;                                                                        \
         vec->capacity = 0;                                                                                 \
         vec->size = 0;                                                                                     \
         vec->data = NULL;                                                                                  \

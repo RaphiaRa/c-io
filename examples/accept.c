@@ -10,7 +10,7 @@ int main(void)
 {
     io_Err err = IO_ERR_OK;
     io_Context context;
-    if ((err = io_Context_init(&context))) {
+    if ((err = io_Context_init(&context, NULL))) {
         printf("Failed to init context: %s\n", io_Err_msg(err));
         return -1;
     }
