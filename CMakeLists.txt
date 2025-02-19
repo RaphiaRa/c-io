@@ -69,6 +69,7 @@ if (NOT IO_DISABLE_TESTS)
     set(IO_TESTS
         tests/context.c
         tests/unix_acceptor.c
+        tests/unix_socket.c
     )
 
     create_test_sourcelist(IO_TEST_SRC_LIST io_test.c

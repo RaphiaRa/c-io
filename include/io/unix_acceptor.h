@@ -6,20 +6,18 @@
 
 #ifndef IO_UNIX_ACCEPTOR_H
 #define IO_UNIX_ACCEPTOR_H
+#if IO_OS_POSIX
 
 #include <io/config.h>
-
-#include <fcntl.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <unistd.h>
 
 #include <io/acceptor.h>
 #include <io/context.h>
 #include <io/err.h>
+#include <io/system_call.h>
 #include <io/system_err.h>
 #include <io/unix_socket.h>
-#include <io/system_call.h>
+
+#include <sys/un.h>
 
 typedef struct io_UnixAcceptor {
     io_Acceptor base;
@@ -66,4 +64,5 @@ io_UnixAcceptor_deinit(io_UnixAcceptor* acceptor)
     io_Acceptor_deinit(&acceptor->base);
 }
 
+#endif
 #endif

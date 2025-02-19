@@ -2,6 +2,8 @@
 
 #include <io/unix_acceptor.h>
 
+#if IO_OS_POSIX
+
 static void
 accept_callback(void* user, io_Err err)
 {
@@ -86,3 +88,5 @@ IO_TEST_BEGIN(unix_acceptor)
     IO_TEST_CASE_END
 }
 IO_TEST_END
+
+#endif

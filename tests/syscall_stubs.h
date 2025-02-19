@@ -32,8 +32,7 @@ read_stub_success(int fd, void* buf, size_t count)
 {
     (void)fd;
     (void)buf;
-    (void)count;
-    return io_atomic_fetch_add(&stub_socket_num, 1);
+    return (ssize_t)count;
 }
 
 static inline ssize_t
