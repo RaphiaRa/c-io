@@ -10,6 +10,7 @@
 #include <io/assert.h>
 #include <io/basic_err.h>
 #include <io/config.h>
+#include <io/gai_err.h>
 #include <io/other_err.h>
 #include <io/system_err.h>
 
@@ -27,6 +28,8 @@ io_Err_msg(io_Err err)
         return io_SystemErr_msg(IO_ERR_CODE(err));
     case IO_OTHER_CATEGORY:
         return io_OtherErr_msg(IO_ERR_CODE(err));
+    case IO_GAI_CATEGORY:
+        return io_GaiErr_msg(IO_ERR_CODE(err));
     default:
         return "Unknown";
     }
@@ -40,6 +43,8 @@ io_Err_category_name(io_Err err)
         return "System";
     case IO_OTHER_CATEGORY:
         return "Other";
+    case IO_GAI_CATEGORY:
+        return "GAI";
     default:
         return "Unknown";
     }
@@ -48,7 +53,13 @@ io_Err_category_name(io_Err err)
 IO_INLINE(int)
 io_Err_printf(FILE* file, io_Err err)
 {
-    return fprintf(file, "Error: %s - %s\n", io_Err_category_name(err), io_Err_msg(err));
+    return fprintf(file, "%s Error: %s\n", io_Err_category_name(err), io_Err_msg(err));
+}
+
+IO_INLINE(int)
+io_Err_snprintf(char* str, size_t size, io_Err err)
+{
+    return snprintf(str, size, "%s Error: %s\n", io_Err_category_name(err), io_Err_msg(err));
 }
 
 #endif

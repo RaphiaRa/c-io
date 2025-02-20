@@ -17,6 +17,7 @@
 typedef enum io_OtherErrc {
     IO_OTHER_ERRC_EOF = 1,
     IO_OTHER_ERRC_UNKNOWN = 2,
+    IO_OTHER_ERRC_NO_ENDPOINT = 3,
 } io_OtherErrc;
 
 IO_INLINE(const char*)

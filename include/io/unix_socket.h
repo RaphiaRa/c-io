@@ -6,6 +6,9 @@
 
 #ifndef IO_UNIX_SOCKET_H
 #define IO_UNIX_SOCKET_H
+
+#include <io/config.h>
+
 #if IO_OS_POSIX
 
 #include <io/socket.h>

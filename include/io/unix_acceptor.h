@@ -6,6 +6,9 @@
 
 #ifndef IO_UNIX_ACCEPTOR_H
 #define IO_UNIX_ACCEPTOR_H
+
+#include <io/config.h>
+
 #if IO_OS_POSIX
 
 #include <io/config.h>
