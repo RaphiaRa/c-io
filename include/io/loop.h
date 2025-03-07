@@ -23,28 +23,30 @@ typedef struct io_Loop {
     io_Mutex mutex;
     io_Reactor* reactor;
     io_Allocator* allocator;
-    size_t num_tasks;
+    size_t* num_tasks;
     bool needs_interrupt;
 } io_Loop;
 
 IO_INLINE(io_Err)
-io_Loop_create(io_Loop** out, io_Allocator* allocator)
+io_Loop_create(io_Loop** out, size_t* task_counter, io_Allocator* allocator)
 {
     io_Loop* loop = io_alloc(allocator, sizeof(io_Loop));
     if (!loop)
         return io_SystemErr(IO_ENOMEM);
-    loop->num_tasks = 0;
+    loop->num_tasks = task_counter;
     loop->queue = (io_TaskQueue){0};
     loop->reactor = NULL;
     loop->allocator = allocator;
     loop->needs_interrupt = false;
     io_Err err = IO_ERR_OK;
     if ((err = io_Mutex_init(&loop->mutex))) {
-        io_free(allocator, loop);
-        return err;
+        goto free_loop;
     }
     io_TaskQueue_push(&loop->queue, &loop->reactor_task);
     *out = loop;
+    return IO_ERR_OK;
+free_loop:
+    io_free(allocator, loop);
     return err;
 }
 
@@ -61,19 +63,25 @@ io_Loop_set_reactor(io_Loop* loop, io_Reactor* reactor)
 IO_INLINE(void)
 io_Loop_decrease_task_count(io_Loop* loop)
 {
-    io_atomic_dec(&loop->num_tasks);
+    io_atomic_dec(loop->num_tasks);
 }
 
 IO_INLINE(void)
 io_Loop_increase_task_count(io_Loop* loop)
 {
-    io_atomic_inc(&loop->num_tasks);
+    io_atomic_inc(loop->num_tasks);
+    io_Mutex_lock(&loop->mutex);
+    if (loop->needs_interrupt) {
+        loop->needs_interrupt = false;
+        io_Reactor_interrupt(loop->reactor);
+    }
+    io_Mutex_unlock(&loop->mutex);
 }
 
 IO_INLINE(size_t)
 io_Loop_get_task_count(io_Loop* loop)
 {
-    return io_atomic_load(&loop->num_tasks);
+    return io_atomic_load(loop->num_tasks);
 }
 
 IO_INLINE(void)
