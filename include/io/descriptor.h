@@ -46,7 +46,7 @@ io_Descriptor_set_fd(io_Descriptor* descriptor, int fd)
     if (descriptor->handle) {
         io_Descriptor_clear_fd(descriptor);
     }
-    descriptor->handle = io_Reactor_create_handle(descriptor->context->loop->reactor, fd);
+    descriptor->handle = io_Reactor_create_handle(io_Context_next_loop(descriptor->context)->reactor, fd);
 }
 
 IO_INLINE(io_Context*)
