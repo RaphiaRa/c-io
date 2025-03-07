@@ -240,7 +240,7 @@ IO_INLINE(io_Err)
 io_PollFds_add_fd(io_PollFds* fds, struct pollfd pfd)
 {
     io_Mutex_lock(&fds->mtx);
-    io_Err err = io_PollFdVec_push_back(&fds->fds, pfd);
+    io_Err err = io_PollFdVec_push_back(&fds->pending_fds, pfd);
     io_Mutex_unlock(&fds->mtx);
     return err;
 }
@@ -251,7 +251,7 @@ io_PollFds_update(io_PollFds* fds)
     io_Err err = IO_ERR_OK;
     io_Mutex_lock(&fds->mtx);
     size_t pending = io_PollFdVec_size(&fds->pending_fds);
-    for (size_t i = pending; i--;) {
+    for (size_t i = 0; i < pending; i++) {
         if ((err = io_PollFdVec_push_back(&fds->fds, *io_PollFdVec_at(&fds->pending_fds, i)))) {
             break;
         }
