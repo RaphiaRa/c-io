@@ -16,7 +16,7 @@ IO_TEST_BEGIN(tcp_socket)
         io_Context ctx;
         io_Context_init(&ctx, test_allocator());
         io_TcpSocket socket;
-        IO_CHECK(io_TcpSocket_init(&socket, &ctx, "localhost", 8080) == IO_ERR_OK);
+        IO_CHECK(io_TcpSocket_init(&socket, &ctx, "localhost:8080") == IO_ERR_OK);
         io_TcpSocket_deinit(&socket);
         io_Context_deinit(&ctx);
     }
@@ -27,7 +27,7 @@ IO_TEST_BEGIN(tcp_socket)
         io_Context_init(&ctx, test_allocator());
         io_mock_system_call.socket = socket_stub_emfile;
         io_TcpSocket socket;
-        IO_CHECK(io_TcpSocket_init(&socket, &ctx, "localhost", 8080) == io_OtherErr(IO_OTHER_ERRC_NO_ENDPOINT));
+        IO_CHECK(io_TcpSocket_init(&socket, &ctx, "localhost:8080") == io_OtherErr(IO_OTHER_ERRC_NO_ENDPOINT));
         io_TcpSocket_deinit(&socket);
         io_Context_deinit(&ctx);
     }
@@ -38,7 +38,7 @@ IO_TEST_BEGIN(tcp_socket)
         io_Context_init(&ctx, test_allocator());
         io_mock_system_call.connect = connect_stub_ebadf;
         io_TcpSocket socket;
-        IO_CHECK(io_TcpSocket_init(&socket, &ctx, "localhost", 8080) == io_OtherErr(IO_OTHER_ERRC_NO_ENDPOINT));
+        IO_CHECK(io_TcpSocket_init(&socket, &ctx, "localhost:8080") == io_OtherErr(IO_OTHER_ERRC_NO_ENDPOINT));
         io_TcpSocket_deinit(&socket);
         io_Context_deinit(&ctx);
     }

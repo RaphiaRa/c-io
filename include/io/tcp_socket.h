@@ -28,31 +28,35 @@ typedef struct io_TcpSocket {
 DEFINE_DESCRIPTOR_WRAPPERS(io_TcpSocket, io_Socket)
 
 IO_INLINE(io_Err)
-io_TcpSocket_connect(io_TcpSocket* socket, const char* path, uint16_t port);
+io_TcpSocket_connect(io_TcpSocket* socket, const char* addr);
 
 IO_INLINE(io_Err)
-io_TcpSocket_init(io_TcpSocket* socket, io_Context* ctx, const char* path, uint16_t port)
+io_TcpSocket_init(io_TcpSocket* socket, io_Context* ctx, const char* addr)
 {
     io_Socket_init(&socket->base, ctx);
-    if (path) {
-        return io_TcpSocket_connect(socket, path, port);
+    if (addr) {
+        return io_TcpSocket_connect(socket, addr);
     }
     return IO_ERR_OK;
 }
 
 IO_INLINE(io_Err)
-io_TcpSocket_connect(io_TcpSocket* socket, const char* path, uint16_t port)
+io_TcpSocket_connect(io_TcpSocket* socket, const char* addr)
 {
     struct addrinfo hints = {0};
     struct addrinfo *servinfo, *p;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    char port_str[16];
-    snprintf(port_str, sizeof(port_str), "%d", port);
+    const char* portstr = strrchr(addr, ':') + 1;
+    if (!portstr) {
+        return io_SystemErr(IO_EINVAL);
+    }
+    char ipstr[64] = {0};
+    snprintf(ipstr, sizeof(ipstr), "%.*s", (int)(portstr - addr) - 1, addr);
 
     int ret = 0;
-    if ((ret = getaddrinfo(path, port_str, &hints, &servinfo)) != 0) {
+    if ((ret = getaddrinfo(ipstr, portstr, &hints, &servinfo)) != 0) {
         return io_GaiErr(ret);
     }
 
