@@ -71,6 +71,7 @@ if (NOT IO_DISABLE_TESTS)
         tests/unix_acceptor.c
         tests/unix_socket.c
         tests/tcp_socket.c
+        tests/tcp_acceptor.c
     )
 
     create_test_sourcelist(IO_TEST_SRC_LIST io_test.c
